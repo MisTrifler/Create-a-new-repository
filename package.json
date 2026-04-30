@@ -1,0 +1,28 @@
+{
+  "name": "localdeal",
+  "version": "1.0.0",
+  "description": "Accessible marketplace with video inspection & verified sellers",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "next": "^14.0.0",
+    "lucide-react": "latest",
+    "stripe": "^13.0.0",
+    "firebase": "^10.0.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "latest",
+    "postcss": "latest",
+    "autoprefixer": "latest"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
