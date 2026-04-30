@@ -1,138 +1,202 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Home() {
   const [postcode, setPostcode] = useState("");
+  const [deals, setDeals] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const deals = [
-    {
-      title: "50% Off Pizza - Yeovil",
-      old: 20,
-      price: 10,
-      location: "Yeovil",
-      image: "https://images.unsplash.com/photo-1594007654729-407eedc4be65"
-    },
-    {
-      title: "Car Wash Deal",
-      old: 25,
-      price: 12,
-      location: "Somerset",
-      image: "https://images.unsplash.com/photo-1607863680198-23d4b2565df0"
-    },
-    {
-      title: "Gym Day Pass",
-      old: 15,
-      price: 5,
-      location: "Yeovil",
-      image: "https://images.unsplash.com/photo-1558611848-73f7eb4001ab"
+  useEffect(() => {
+    fetchDeals();
+  }, []);
+
+  async function fetchDeals() {
+    setLoading(true);
+
+    const { data, error } = await supabase
+      .from("deals")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+      alert("Could not load deals");
+    } else {
+      setDeals(data || []);
     }
-  ];
 
-  const filteredDeals = deals.filter(d =>
-    postcode === "" || d.location.toLowerCase().includes(postcode.toLowerCase())
-  );
+    setLoading(false);
+  }
+
+  const filteredDeals = deals.filter((deal) => {
+    const search = postcode.toLowerCase();
+
+    return (
+      postcode === "" ||
+      deal.location?.toLowerCase().includes(search) ||
+      deal.title?.toLowerCase().includes(search)
+    );
+  });
 
   return (
-    <div style={{ fontFamily: "Arial" }}>
-      
-      {/* HEADER */}
-      <div style={{
-  display: "flex",
-  justifyContent: "space-between",
-  padding: "20px",
-  borderBottom: "1px solid #eee"
-}}>
-  <h2>LocalDeal</h2>
+    <div style={{ fontFamily: "Arial, sans-serif", background: "#f8fafc", minHeight: "100vh" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "20px 40px",
+          background: "white",
+          borderBottom: "1px solid #e5e7eb"
+        }}
+      >
+        <a href="/" style={{ textDecoration: "none", color: "#111" }}>
+          <h2 style={{ margin: 0 }}>LocalDeal</h2>
+        </a>
 
-  <div>
-    <a href="/post-deal" style={{ marginRight: "15px" }}>Post Deal</a>
-    <a href="/login" style={{ marginRight: "10px" }}>Login</a>
-    <a href="/signup">Sign Up</a>
-  </div>
-</div>
+        <div>
+          <a href="/post-deal" style={{ marginRight: "20px", textDecoration: "none", color: "#111" }}>
+            Post Deal
+          </a>
 
-      {/* HERO */}
-      <div style={{ textAlign: "center", padding: "50px" }}>
-        <h1>Find the Best Local Deals Near You</h1>
-        <p>Save money on food, services & more</p>
+          <a href="/login" style={{ textDecoration: "none", color: "#111" }}>
+            Login
+          </a>
+        </div>
+      </div>
+
+      <div style={{ textAlign: "center", padding: "70px 20px", background: "white" }}>
+        <h1 style={{ fontSize: "46px", marginBottom: "10px" }}>
+          Find the Best Local Deals Near You
+        </h1>
+
+        <p style={{ color: "#555", fontSize: "18px", marginBottom: "25px" }}>
+          Save money on food, gyms, car washes, beauty, services and more.
+        </p>
 
         <input
           placeholder="Enter town or postcode"
           value={postcode}
           onChange={(e) => setPostcode(e.target.value)}
           style={{
-            padding: "10px",
-            marginRight: "10px",
-            borderRadius: "6px",
-            border: "1px solid #ccc"
+            padding: "14px",
+            width: "260px",
+            borderRadius: "8px",
+            border: "1px solid #ccc",
+            marginRight: "10px"
           }}
         />
 
-        <button style={{
-          padding: "10px 20px",
-          background: "#f4b400",
-          border: "none",
-          borderRadius: "6px"
-        }}>
-          Search
+        <button
+          style={{
+            padding: "14px 24px",
+            background: "#f4b400",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            fontWeight: "bold"
+          }}
+        >
+          Search Deals
         </button>
       </div>
 
-      {/* DEALS */}
-      <div style={{ padding: "40px" }}>
-        <h2>🔥 Deals Near You</h2>
+      <div style={{ padding: "50px 40px" }}>
+        <h2 style={{ marginBottom: "25px" }}>🔥 Deals Near You</h2>
 
-        <div style={{
-          display: "flex",
-          gap: "20px",
-          marginTop: "20px",
-          flexWrap: "wrap"
-        }}>
-          {filteredDeals.map((d, i) => (
-            <div key={i} style={{
-              border: "1px solid #ddd",
-              borderRadius: "10px",
-              width: "250px"
-            }}>
-              <img
-                src={d.image}
-                style={{ width: "100%", height: "150px", objectFit: "cover" }}
-              />
+        {loading && <p>Loading deals...</p>}
 
-              <div style={{ padding: "10px" }}>
-                <h4>{d.title}</h4>
-                <p>{d.location}</p>
+        {!loading && filteredDeals.length === 0 && (
+          <p>No deals found. Try another town or postcode.</p>
+        )}
 
-                <p>
-                  <s>£{d.old}</s> <b>£{d.price}</b>
-                </p>
+        <div
+          style={{
+            display: "flex",
+            gap: "25px",
+            flexWrap: "wrap"
+          }}
+        >
+          {filteredDeals.map((deal) => {
+            const discount =
+              deal.old_price && deal.price
+                ? Math.round(((deal.old_price - deal.price) / deal.old_price) * 100)
+                : null;
 
-                <p style={{ color: "green" }}>
-                  {Math.round(((d.old - d.price) / d.old) * 100)}% OFF
-                </p>
+            return (
+              <div
+                key={deal.id}
+                style={{
+                  width: "280px",
+                  background: "white",
+                  borderRadius: "14px",
+                  overflow: "hidden",
+                  border: "1px solid #e5e7eb",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.06)"
+                }}
+              >
+                <img
+                  src={
+                    deal.image_url ||
+                    "https://images.unsplash.com/photo-1607082349566-187342175e2f"
+                  }
+                  alt={deal.title}
+                  style={{
+                    width: "100%",
+                    height: "170px",
+                    objectFit: "cover"
+                  }}
+                />
 
-                <button style={{
-                  marginTop: "10px",
-                  padding: "8px",
-                  width: "100%",
-                  background: "#0070f3",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px"
-                }}>
-                  View Deal
-                </button>
+                <div style={{ padding: "18px" }}>
+                  <p style={{ color: "#666", fontSize: "14px", margin: "0 0 6px" }}>
+                    {deal.business_name || "Local Business"} · {deal.location}
+                  </p>
+
+                  <h3 style={{ margin: "0 0 10px" }}>{deal.title}</h3>
+
+                  {deal.description && (
+                    <p style={{ color: "#555", fontSize: "14px" }}>
+                      {deal.description}
+                    </p>
+                  )}
+
+                  <p style={{ fontSize: "18px" }}>
+                    {deal.old_price && <s>£{deal.old_price}</s>}{" "}
+                    <b>£{deal.price}</b>
+                  </p>
+
+                  {discount !== null && (
+                    <p style={{ color: "green", fontWeight: "bold" }}>
+                      {discount}% OFF
+                    </p>
+                  )}
+
+                  <button
+                    style={{
+                      marginTop: "10px",
+                      width: "100%",
+                      padding: "12px",
+                      background: "#111827",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "8px",
+                      cursor: "pointer"
+                    }}
+                  >
+                    View Deal
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
-      {/* TRUST */}
-      <div style={{ textAlign: "center", padding: "40px", color: "#555" }}>
-        <p>🔥 New deals added daily</p>
-        <p>📍 Local businesses near you</p>
+      <div style={{ textAlign: "center", padding: "40px", color: "#666" }}>
+        <p>🔥 New local deals added daily</p>
+        <p>📍 Built for local businesses and local customers</p>
       </div>
-
     </div>
   );
 }
