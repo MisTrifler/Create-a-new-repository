@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Head from "next/head";
 
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -210,6 +211,9 @@ export default function App() {
 
   if (!user) return (
     <>
+      <Head>
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6766161069412141" crossOrigin="anonymous"></script>
+      </Head>
       <style>{STYLES}</style>
       <div style={s.authBox}>
         <div style={s.authCard}>
@@ -242,6 +246,9 @@ export default function App() {
 
   return (
     <>
+      <Head>
+        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6766161069412141" crossOrigin="anonymous"></script>
+      </Head>
       <style>{STYLES}</style>
       <div style={s.page}>
         {/* NAV */}
