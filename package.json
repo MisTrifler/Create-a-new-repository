@@ -15,7 +15,7 @@
     "next": "^14.0.0",
     "lucide-react": "latest",
     "stripe": "^13.0.0",
-    "firebase": "^10.0.0"
+    "firebase": "^10.12.0"
   },
   "devDependencies": {
     "tailwindcss": "latest",
