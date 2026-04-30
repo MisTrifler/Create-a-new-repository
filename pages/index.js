@@ -36,17 +36,19 @@ export default function Home() {
       
       {/* HEADER */}
       <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        padding: "20px",
-        borderBottom: "1px solid #eee"
-      }}>
-        <h2>LocalDeal</h2>
-        <div>
-          <button style={{ marginRight: "10px" }}>Login</button>
-          <button>Sign Up</button>
-        </div>
-      </div>
+  display: "flex",
+  justifyContent: "space-between",
+  padding: "20px",
+  borderBottom: "1px solid #eee"
+}}>
+  <h2>LocalDeal</h2>
+
+  <div>
+    <a href="/post-deal" style={{ marginRight: "15px" }}>Post Deal</a>
+    <a href="/login" style={{ marginRight: "10px" }}>Login</a>
+    <a href="/signup">Sign Up</a>
+  </div>
+</div>
 
       {/* HERO */}
       <div style={{ textAlign: "center", padding: "50px" }}>
