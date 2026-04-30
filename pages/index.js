@@ -1,41 +1,39 @@
 import { useState } from "react";
 
 export default function Home() {
-  const [user, setUser] = useState(null);
+  const [postcode, setPostcode] = useState("");
 
   const deals = [
     {
-      title: "Restaurant Voucher",
-      old: 50,
-      price: 19,
-      image: "https://images.unsplash.com/photo-1555992336-03a23c7b20ee"
+      title: "50% Off Pizza - Yeovil",
+      old: 20,
+      price: 10,
+      location: "Yeovil",
+      image: "https://images.unsplash.com/photo-1594007654729-407eedc4be65"
     },
     {
-      title: "Spa Day",
-      old: 80,
-      price: 35,
-      image: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874"
+      title: "Car Wash Deal",
+      old: 25,
+      price: 12,
+      location: "Somerset",
+      image: "https://images.unsplash.com/photo-1607863680198-23d4b2565df0"
+    },
+    {
+      title: "Gym Day Pass",
+      old: 15,
+      price: 5,
+      location: "Yeovil",
+      image: "https://images.unsplash.com/photo-1558611848-73f7eb4001ab"
     }
   ];
 
-  const products = [
-    {
-      title: "Wireless Headphones",
-      price: 59,
-      image: "https://images.unsplash.com/photo-1518441902117-6f2c2d6db82b",
-      link: "https://example.com"
-    },
-    {
-      title: "Smart Watch",
-      price: 99,
-      image: "https://images.unsplash.com/photo-1511735111819-9a3f7709049c",
-      link: "https://example.com"
-    }
-  ];
+  const filteredDeals = deals.filter(d =>
+    postcode === "" || d.location.toLowerCase().includes(postcode.toLowerCase())
+  );
 
   return (
     <div style={{ fontFamily: "Arial" }}>
-
+      
       {/* HEADER */}
       <div style={{
         display: "flex",
@@ -44,30 +42,21 @@ export default function Home() {
         borderBottom: "1px solid #eee"
       }}>
         <h2>LocalDeal</h2>
-
         <div>
-          {user ? (
-            <span>Welcome 👋</span>
-          ) : (
-            <>
-              <button onClick={() => setUser(true)} style={{ marginRight: "10px" }}>
-                Login
-              </button>
-              <button onClick={() => setUser(true)}>
-                Sign Up
-              </button>
-            </>
-          )}
+          <button style={{ marginRight: "10px" }}>Login</button>
+          <button>Sign Up</button>
         </div>
       </div>
 
       {/* HERO */}
       <div style={{ textAlign: "center", padding: "50px" }}>
-        <h1>Find Deals & Products Near You</h1>
-        <p>Save money on local services and trending products</p>
+        <h1>Find the Best Local Deals Near You</h1>
+        <p>Save money on food, services & more</p>
 
         <input
-          placeholder="Enter postcode"
+          placeholder="Enter town or postcode"
+          value={postcode}
+          onChange={(e) => setPostcode(e.target.value)}
           style={{
             padding: "10px",
             marginRight: "10px",
@@ -88,62 +77,58 @@ export default function Home() {
 
       {/* DEALS */}
       <div style={{ padding: "40px" }}>
-        <h2>🔥 Local Deals</h2>
+        <h2>🔥 Deals Near You</h2>
 
-        <div style={{ display: "flex", gap: "20px", marginTop: "20px" }}>
-          {deals.map((d, i) => (
+        <div style={{
+          display: "flex",
+          gap: "20px",
+          marginTop: "20px",
+          flexWrap: "wrap"
+        }}>
+          {filteredDeals.map((d, i) => (
             <div key={i} style={{
               border: "1px solid #ddd",
               borderRadius: "10px",
               width: "250px"
             }}>
-              <img src={d.image} style={{ width: "100%", height: "150px", objectFit: "cover" }} />
+              <img
+                src={d.image}
+                style={{ width: "100%", height: "150px", objectFit: "cover" }}
+              />
 
               <div style={{ padding: "10px" }}>
                 <h4>{d.title}</h4>
-                <p><s>£{d.old}</s> <b>£{d.price}</b></p>
+                <p>{d.location}</p>
+
+                <p>
+                  <s>£{d.old}</s> <b>£{d.price}</b>
+                </p>
+
                 <p style={{ color: "green" }}>
                   {Math.round(((d.old - d.price) / d.old) * 100)}% OFF
                 </p>
+
+                <button style={{
+                  marginTop: "10px",
+                  padding: "8px",
+                  width: "100%",
+                  background: "#0070f3",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "6px"
+                }}>
+                  View Deal
+                </button>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* PRODUCTS */}
-      <div style={{ padding: "40px" }}>
-        <h2>🛍️ Popular Products</h2>
-
-        <div style={{ display: "flex", gap: "20px", marginTop: "20px" }}>
-          {products.map((p, i) => (
-            <div key={i} style={{
-              border: "1px solid #ddd",
-              borderRadius: "10px",
-              width: "250px"
-            }}>
-              <img src={p.image} style={{ width: "100%", height: "150px", objectFit: "cover" }} />
-
-              <div style={{ padding: "10px" }}>
-                <h4>{p.title}</h4>
-                <p>£{p.price}</p>
-
-                <a href={p.link} target="_blank">
-                  <button style={{
-                    marginTop: "10px",
-                    padding: "8px 12px",
-                    background: "#0070f3",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "6px"
-                  }}>
-                    View Deal
-                  </button>
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* TRUST */}
+      <div style={{ textAlign: "center", padding: "40px", color: "#555" }}>
+        <p>🔥 New deals added daily</p>
+        <p>📍 Local businesses near you</p>
       </div>
 
     </div>
