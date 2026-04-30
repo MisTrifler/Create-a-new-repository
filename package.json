@@ -10,19 +10,18 @@
     "lint": "next lint"
   },
   "dependencies": {
-  "react": "^18.2.0",
-  "react-dom": "^18.2.0",
-  "next": "^14.0.0",
-  "lucide-react": "latest",
-  "stripe": "^13.0.0",
-  "firebase": "^10.12.0",
-  "@supabase/supabase-js": "^2.45.0"
-}
+    "@supabase/supabase-js": "^2.45.0",
+    "firebase": "^10.12.0",
+    "lucide-react": "latest",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "stripe": "^13.0.0"
   },
   "devDependencies": {
-    "tailwindcss": "latest",
+    "autoprefixer": "latest",
     "postcss": "latest",
-    "autoprefixer": "latest"
+    "tailwindcss": "latest"
   },
   "engines": {
     "node": "20.x"
