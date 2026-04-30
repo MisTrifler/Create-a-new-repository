@@ -1,755 +1,459 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Plus, MapPin, Star, MessageSquare, Heart, Flag, LogOut, Settings, Trash2, Eye, EyeOff, Home, User, Send, X, Video, Truck, CheckCircle, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from "react";
 
-export default function LocalMarketplaceEnhanced() {
-  // Auth state
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loginEmail, setLoginEmail] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
+const STYLES = `
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #f7f5f2; color: #1a1a1a; }
+  input, textarea, select, button { font-family: 'DM Sans', sans-serif; }
+  ::placeholder { color: #aaa; }
+`;
 
-  // Listings state
+const s = {
+  page: { minHeight: "100vh", background: "#f7f5f2" },
+  nav: {
+    background: "#1a1a1a", color: "#fff", padding: "0 32px",
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    height: "64px", position: "sticky", top: 0, zIndex: 100,
+    boxShadow: "0 2px 20px rgba(0,0,0,0.3)"
+  },
+  logo: { fontFamily: "'Playfair Display', serif", fontSize: "24px", letterSpacing: "-0.5px", color: "#fff" },
+  logoSpan: { color: "#e8c547" },
+  navRight: { display: "flex", gap: "12px", alignItems: "center" },
+  btn: {
+    padding: "10px 20px", borderRadius: "8px", border: "none",
+    cursor: "pointer", fontWeight: "600", fontSize: "14px", transition: "all 0.2s"
+  },
+  btnPrimary: { background: "#e8c547", color: "#1a1a1a" },
+  btnDark: { background: "#333", color: "#fff" },
+  btnOutline: { background: "transparent", color: "#fff", border: "1px solid #444" },
+  btnDanger: { background: "#ff4444", color: "#fff" },
+  btnGreen: { background: "#22c55e", color: "#fff" },
+  hero: {
+    background: "linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)",
+    color: "#fff", padding: "60px 32px", textAlign: "center"
+  },
+  heroTitle: {
+    fontFamily: "'Playfair Display', serif", fontSize: "clamp(32px, 5vw, 56px)",
+    marginBottom: "16px", lineHeight: 1.1
+  },
+  heroSub: { color: "#aaa", fontSize: "18px", marginBottom: "32px" },
+  searchBar: {
+    display: "flex", gap: "12px", maxWidth: "600px", margin: "0 auto",
+    background: "#fff", borderRadius: "12px", padding: "8px",
+    boxShadow: "0 4px 24px rgba(0,0,0,0.3)"
+  },
+  searchInput: {
+    flex: 1, padding: "12px 16px", border: "none", outline: "none",
+    fontSize: "16px", borderRadius: "8px", background: "transparent"
+  },
+  container: { maxWidth: "1200px", margin: "0 auto", padding: "32px 20px" },
+  filters: {
+    display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "24px",
+    alignItems: "center"
+  },
+  filterLabel: { fontWeight: "600", fontSize: "14px", color: "#666", marginRight: "4px" },
+  chip: {
+    padding: "8px 16px", borderRadius: "20px", border: "1.5px solid #ddd",
+    cursor: "pointer", fontSize: "13px", fontWeight: "500", background: "#fff",
+    transition: "all 0.15s", whiteSpace: "nowrap"
+  },
+  chipActive: { background: "#1a1a1a", color: "#fff", border: "1.5px solid #1a1a1a" },
+  grid: {
+    display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+    gap: "20px"
+  },
+  card: {
+    background: "#fff", borderRadius: "16px", overflow: "hidden",
+    boxShadow: "0 2px 12px rgba(0,0,0,0.06)", transition: "all 0.2s",
+    cursor: "pointer", border: "1px solid #eee"
+  },
+  cardImg: {
+    width: "100%", height: "200px", objectFit: "cover",
+    background: "linear-gradient(135deg, #f0f0f0, #e0e0e0)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontSize: "48px"
+  },
+  cardBody: { padding: "16px" },
+  cardTitle: { fontWeight: "600", fontSize: "16px", marginBottom: "6px" },
+  cardPrice: { fontSize: "22px", fontWeight: "700", color: "#1a1a1a", marginBottom: "8px" },
+  cardMeta: { fontSize: "13px", color: "#888", marginBottom: "12px" },
+  badge: {
+    display: "inline-block", padding: "3px 10px", borderRadius: "20px",
+    fontSize: "11px", fontWeight: "600", marginRight: "6px"
+  },
+  badgeShip: { background: "#dbeafe", color: "#1d4ed8" },
+  badgeLocal: { background: "#dcfce7", color: "#166534" },
+  badgePremium: { background: "#fef3c7", color: "#92400e" },
+  stars: { color: "#e8c547", fontSize: "14px" },
+  modal: {
+    position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    zIndex: 1000, padding: "20px", backdropFilter: "blur(4px)"
+  },
+  modalBox: {
+    background: "#fff", borderRadius: "20px", width: "100%",
+    maxWidth: "520px", maxHeight: "90vh", overflow: "auto",
+    boxShadow: "0 24px 60px rgba(0,0,0,0.3)"
+  },
+  modalHead: {
+    padding: "24px 28px 0", display: "flex",
+    justifyContent: "space-between", alignItems: "center", marginBottom: "20px"
+  },
+  modalTitle: { fontFamily: "'Playfair Display', serif", fontSize: "22px" },
+  modalBody: { padding: "0 28px 28px" },
+  field: { marginBottom: "16px" },
+  label: { display: "block", fontWeight: "600", fontSize: "13px", marginBottom: "6px", color: "#555" },
+  input: {
+    width: "100%", padding: "12px 14px", border: "1.5px solid #e5e5e5",
+    borderRadius: "10px", fontSize: "15px", outline: "none", transition: "border 0.2s"
+  },
+  select: {
+    width: "100%", padding: "12px 14px", border: "1.5px solid #e5e5e5",
+    borderRadius: "10px", fontSize: "15px", outline: "none", background: "#fff"
+  },
+  authBox: {
+    minHeight: "100vh", display: "flex", alignItems: "center",
+    justifyContent: "center", background: "#f7f5f2", padding: "20px"
+  },
+  authCard: {
+    background: "#fff", borderRadius: "24px", padding: "48px 40px",
+    width: "100%", maxWidth: "400px", boxShadow: "0 8px 40px rgba(0,0,0,0.1)"
+  },
+  authTitle: {
+    fontFamily: "'Playfair Display', serif", fontSize: "32px",
+    marginBottom: "8px", textAlign: "center"
+  },
+  authSub: { color: "#888", textAlign: "center", marginBottom: "32px", fontSize: "15px" },
+  divider: { height: "1px", background: "#eee", margin: "20px 0" },
+  emptyState: { textAlign: "center", padding: "80px 20px", color: "#888" },
+  emptyIcon: { fontSize: "64px", marginBottom: "16px" },
+  emptyTitle: { fontSize: "20px", fontWeight: "600", marginBottom: "8px", color: "#444" },
+  detailModal: {
+    background: "#fff", borderRadius: "20px", width: "100%",
+    maxWidth: "680px", maxHeight: "90vh", overflow: "auto",
+    boxShadow: "0 24px 60px rgba(0,0,0,0.3)"
+  },
+  detailImg: {
+    width: "100%", height: "280px",
+    background: "linear-gradient(135deg, #f0f0f0, #e0e0e0)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontSize: "80px", borderRadius: "20px 20px 0 0"
+  },
+  tag: {
+    display: "inline-block", padding: "4px 12px", borderRadius: "20px",
+    background: "#f0f0f0", fontSize: "12px", fontWeight: "600", marginRight: "6px"
+  },
+};
+
+const CATEGORIES = ["All", "Electronics", "Furniture", "Clothing", "Books", "Tools", "Sports", "Other"];
+const CATEGORY_ICONS = { Electronics: "💻", Furniture: "🛋️", Clothing: "👕", Books: "📚", Tools: "🔧", Sports: "⚽", Other: "📦" };
+
+export default function App() {
+  const [user, setUser] = useState(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [listings, setListings] = useState([]);
-  const [filteredListings, setFilteredListings] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [deliveryFilter, setDeliveryFilter] = useState('all'); // all, local, shipping
-
-  // Modal states
-  const [showCreateListing, setShowCreateListing] = useState(false);
-  const [showListingDetail, setShowListingDetail] = useState(null);
-  const [showMessaging, setShowMessaging] = useState(null);
-  const [showVideoRequest, setShowVideoRequest] = useState(null);
-
-  // Form states
-  const [newListing, setNewListing] = useState({
-    title: '',
-    description: '',
-    price: '',
-    category: 'other',
-    location: '',
-    images: [''], // Multiple images
-    condition: '5', // 1-5 star condition
-    videoUrl: '', // YouTube/Vimeo link
-    allowsDelivery: false,
-    allowsLocalPickup: true,
-    itemDescription: '' // Extended description
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("All");
+  const [delivery, setDelivery] = useState("all");
+  const [showPost, setShowPost] = useState(false);
+  const [selectedListing, setSelectedListing] = useState(null);
+  const [showMsg, setShowMsg] = useState(false);
+  const [message, setMessage] = useState("");
+  const [newItem, setNewItem] = useState({
+    title: "", price: "", description: "", category: "Electronics",
+    location: "", condition: "Good", shipsAnywhere: false, videoUrl: "", imageEmoji: "📦"
   });
-  const [messages, setMessages] = useState({});
-  const [newMessage, setNewMessage] = useState('');
 
-  // Data
-  const categories = ['all', 'electronics', 'furniture', 'clothing', 'books', 'tools', 'sports', 'other'];
-
-  // Load data
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem('marketplace-enhanced') || '{}');
-    if (saved.listings) setListings(saved.listings);
-    if (saved.currentUser) setCurrentUser(saved.currentUser);
-    if (saved.messages) setMessages(saved.messages);
+    const saved = localStorage.getItem("ld_listings");
+    const savedUser = localStorage.getItem("ld_user");
+    if (saved) setListings(JSON.parse(saved));
+    if (savedUser) setUser(JSON.parse(savedUser));
   }, []);
 
-  // Save data
-  useEffect(() => {
-    localStorage.setItem('marketplace-enhanced', JSON.stringify({ listings, currentUser, messages }));
-  }, [listings, currentUser, messages]);
+  const save = (items) => {
+    setListings(items);
+    localStorage.setItem("ld_listings", JSON.stringify(items));
+  };
 
-  // Filter listings
-  useEffect(() => {
-    let filtered = listings.filter(l => !l.flagged);
-    
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(l => l.category === selectedCategory);
-    }
+  const signIn = () => {
+    if (!email || !password) return alert("Please enter email and password");
+    const u = { email, name: email.split("@")[0], premium: false };
+    setUser(u);
+    localStorage.setItem("ld_user", JSON.stringify(u));
+  };
 
-    if (deliveryFilter === 'local') {
-      filtered = filtered.filter(l => l.allowsLocalPickup);
-    } else if (deliveryFilter === 'shipping') {
-      filtered = filtered.filter(l => l.allowsDelivery);
-    }
-    
-    if (searchQuery) {
-      filtered = filtered.filter(l =>
-        l.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        l.itemDescription.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    setFilteredListings(filtered);
-  }, [listings, searchQuery, selectedCategory, deliveryFilter]);
+  const signOut = () => {
+    setUser(null);
+    localStorage.removeItem("ld_user");
+  };
 
-  // Auth handlers
-  const handleLogin = () => {
-    if (!loginEmail || !loginPassword) return;
-    const user = {
-      id: Math.random(),
-      email: loginEmail,
-      createdAt: new Date(),
-      isPremium: false,
-      isVerified: false // New: seller verification
+  const postItem = () => {
+    if (!newItem.title || !newItem.price) return alert("Please fill in title and price");
+    const item = {
+      ...newItem, id: Date.now(), seller: user.name, sellerEmail: user.email,
+      date: new Date().toLocaleDateString(), rating: 4.5, views: 0, favorited: false
     };
-    setCurrentUser(user);
-    setLoginEmail('');
-    setLoginPassword('');
+    save([item, ...listings]);
+    setShowPost(false);
+    setNewItem({ title: "", price: "", description: "", category: "Electronics", location: "", condition: "Good", shipsAnywhere: false, videoUrl: "", imageEmoji: "📦" });
   };
 
-  const handleLogout = () => {
-    setCurrentUser(null);
-  };
+  const filtered = listings.filter(l => {
+    const matchSearch = l.title.toLowerCase().includes(search.toLowerCase()) ||
+      l.description?.toLowerCase().includes(search.toLowerCase());
+    const matchCat = category === "All" || l.category === category;
+    const matchDel = delivery === "all" || (delivery === "ship" && l.shipsAnywhere) || (delivery === "local" && !l.shipsAnywhere);
+    return matchSearch && matchCat && matchDel;
+  });
 
-  // Create listing
-  const handleCreateListing = () => {
-    if (!newListing.title || !newListing.price || !newListing.location) return;
-    
-    const listing = {
-      id: Date.now(),
-      ...newListing,
-      sellerId: currentUser.id,
-      sellerEmail: currentUser.email,
-      isSellerVerified: currentUser.isVerified,
-      createdAt: new Date(),
-      videoRequests: [],
-      reviews: [],
-      favorites: [],
-      flagged: false
-    };
-    setListings([listing, ...listings]);
-    setNewListing({
-      title: '',
-      description: '',
-      price: '',
-      category: 'other',
-      location: '',
-      images: [''],
-      condition: '5',
-      videoUrl: '',
-      allowsDelivery: false,
-      allowsLocalPickup: true,
-      itemDescription: ''
-    });
-    setShowCreateListing(false);
-  };
-
-  const handleDeleteListing = (id) => {
-    setListings(listings.filter(l => l.id !== id));
-  };
-
-  const handleFlagListing = (id) => {
-    setListings(listings.map(l =>
-      l.id === id ? { ...l, flagged: true } : l
-    ));
-  };
-
-  const handleToggleFavorite = (id) => {
-    setListings(listings.map(l => {
-      if (l.id === id) {
-        const isFavorited = l.favorites.includes(currentUser.id);
-        return {
-          ...l,
-          favorites: isFavorited
-            ? l.favorites.filter(uid => uid !== currentUser.id)
-            : [...l.favorites, currentUser.id]
-        };
-      }
-      return l;
-    }));
-  };
-
-  // Video inspection request
-  const handleVideoRequest = (listingId) => {
-    setListings(listings.map(l => {
-      if (l.id === listingId) {
-        return {
-          ...l,
-          videoRequests: [...(l.videoRequests || []), {
-            from: currentUser.email,
-            requestedAt: new Date(),
-            status: 'pending'
-          }]
-        };
-      }
-      return l;
-    }));
-    alert('Video inspection requested! Seller will respond within 24 hours.');
-    setShowVideoRequest(null);
-  };
-
-  // Messaging
-  const handleSendMessage = (recipientId, listingId) => {
-    if (!newMessage.trim()) return;
-    const conversationKey = [currentUser.id, recipientId, listingId].sort().join('_');
-    const msg = {
-      from: currentUser.id,
-      to: recipientId,
-      text: newMessage,
-      timestamp: new Date(),
-      listingId
-    };
-    setMessages({
-      ...messages,
-      [conversationKey]: [...(messages[conversationKey] || []), msg]
-    });
-    setNewMessage('');
-  };
-
-  const getConversationMessages = (otherUserId, listingId) => {
-    const key = [currentUser.id, otherUserId, listingId].sort().join('_');
-    return messages[key] || [];
-  };
-
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
-        <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-md w-full space-y-6">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-black bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              LocalDeal
-            </h1>
-            <p className="text-slate-400 text-sm">Buy & sell locally. See first. Trust always.</p>
+  if (!user) return (
+    <>
+      <style>{STYLES}</style>
+      <div style={s.authBox}>
+        <div style={s.authCard}>
+          <div style={{ textAlign: "center", marginBottom: "24px" }}>
+            <div style={{ fontSize: "48px", marginBottom: "8px" }}>🏪</div>
+            <div style={s.authTitle}>Local<span style={{ color: "#e8c547" }}>Deal</span></div>
+            <div style={s.authSub}>Buy & sell locally. See first. Trust always.</div>
           </div>
-
-          <div className="space-y-3">
-            <input
-              type="email"
-              placeholder="Email"
-              value={loginEmail}
-              onChange={(e) => setLoginEmail(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 outline-none"
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={loginPassword}
-              onChange={(e) => setLoginPassword(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 outline-none"
-            />
-            <button
-              onClick={handleLogin}
-              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold py-3 rounded-lg hover:shadow-lg transition-all"
-            >
-              Sign In / Sign Up
-            </button>
+          <div style={s.field}>
+            <label style={s.label}>Email Address</label>
+            <input style={s.input} type="email" placeholder="you@example.com"
+              value={email} onChange={e => setEmail(e.target.value)} />
           </div>
+          <div style={s.field}>
+            <label style={s.label}>Password</label>
+            <input style={s.input} type="password" placeholder="••••••••"
+              value={password} onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && signIn()} />
+          </div>
+          <button style={{ ...s.btn, ...s.btnPrimary, width: "100%", padding: "14px", fontSize: "16px", borderRadius: "12px" }}
+            onClick={signIn}>Sign In / Sign Up →</button>
+          <div style={s.divider} />
+          <p style={{ textAlign: "center", fontSize: "13px", color: "#aaa" }}>
+            🔒 New users are created automatically
+          </p>
         </div>
       </div>
-    );
-  }
+    </>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Header */}
-      <header className="bg-slate-800/50 border-b border-slate-700 sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-black bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-              LocalDeal
-            </h1>
-            <div className="flex gap-3">
-              <button onClick={handleLogout} className="p-2 bg-slate-700 rounded-lg hover:bg-slate-600">
-                <LogOut size={20} />
-              </button>
-            </div>
+    <>
+      <style>{STYLES}</style>
+      <div style={s.page}>
+        {/* NAV */}
+        <nav style={s.nav}>
+          <div style={s.logo}>Local<span style={s.logoSpan}>Deal</span></div>
+          <div style={s.navRight}>
+            <span style={{ color: "#888", fontSize: "14px" }}>Hi, {user.name}</span>
+            <button style={{ ...s.btn, ...s.btnPrimary }} onClick={() => setShowPost(true)}>+ Post Item</button>
+            <button style={{ ...s.btn, ...s.btnOutline }} onClick={signOut}>Sign Out</button>
           </div>
-          <p className="text-slate-400 text-sm">Built for people who can't travel far. Video inspections. Trust verified.</p>
+        </nav>
+
+        {/* HERO */}
+        <div style={s.hero}>
+          <div style={s.heroTitle}>Buy & Sell <span style={{ color: "#e8c547" }}>Locally</span></div>
+          <div style={s.heroSub}>Video inspections • Verified sellers • Ships anywhere</div>
+          <div style={s.searchBar}>
+            <span style={{ padding: "12px 8px 12px 16px", fontSize: "18px" }}>🔍</span>
+            <input style={s.searchInput} placeholder="Search listings..."
+              value={search} onChange={e => setSearch(e.target.value)} />
+            <button style={{ ...s.btn, ...s.btnPrimary }} onClick={() => {}}>Search</button>
+          </div>
         </div>
-      </header>
 
-      <div className="max-w-6xl mx-auto p-4 space-y-6">
-        {/* Search & Filters */}
-        <div className="space-y-4">
-          <div className="flex gap-3">
-            <div className="flex-1 relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-500" size={20} />
-              <input
-                type="text"
-                placeholder="Search listings..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 outline-none"
-              />
-            </div>
-            <button
-              onClick={() => setShowCreateListing(true)}
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold rounded-lg hover:shadow-lg transition-all flex items-center gap-2"
-            >
-              <Plus size={20} />
-              Post Item
-            </button>
-          </div>
-
-          {/* Delivery Filter */}
-          <div className="flex gap-2 flex-wrap">
-            <div className="text-sm text-slate-400 flex items-center">Delivery:</div>
-            {['all', 'local', 'shipping'].map(option => (
-              <button
-                key={option}
-                onClick={() => setDeliveryFilter(option)}
-                className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
-                  deliveryFilter === option
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                }`}
-              >
-                {option === 'all' && '📍 All Options'}
-                {option === 'local' && '🚶 Local Pickup'}
-                {option === 'shipping' && '🚚 Ships Anywhere'}
-              </button>
+        {/* FILTERS */}
+        <div style={s.container}>
+          <div style={s.filters}>
+            <span style={s.filterLabel}>Delivery:</span>
+            {[["all", "📍 All"], ["local", "🚶 Local"], ["ship", "🚚 Ships"]].map(([val, label]) => (
+              <button key={val} style={{ ...s.chip, ...(delivery === val ? s.chipActive : {}) }}
+                onClick={() => setDelivery(val)}>{label}</button>
+            ))}
+            <span style={{ ...s.filterLabel, marginLeft: "12px" }}>Category:</span>
+            {CATEGORIES.map(c => (
+              <button key={c} style={{ ...s.chip, ...(category === c ? s.chipActive : {}) }}
+                onClick={() => setCategory(c)}>{c}</button>
             ))}
           </div>
 
-          {/* Category Filter */}
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-lg font-semibold whitespace-nowrap transition-all ${
-                  selectedCategory === cat
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                }`}
-              >
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </button>
-            ))}
+          {/* STATS */}
+          <div style={{ marginBottom: "24px", fontSize: "14px", color: "#888" }}>
+            {filtered.length} listing{filtered.length !== 1 ? "s" : ""} found
           </div>
-        </div>
 
-        {/* Listings Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredListings.map(listing => (
-            <div
-              key={listing.id}
-              className="bg-slate-800 border border-slate-700 rounded-lg overflow-hidden hover:border-slate-600 transition-colors group cursor-pointer"
-              onClick={() => setShowListingDetail(listing)}
-            >
-              {/* Image Carousel */}
-              <div className="aspect-square bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center relative overflow-hidden">
-                {listing.images && listing.images[0] && (
-                  <img src={listing.images[0]} alt={listing.title} className="w-full h-full object-cover" />
-                )}
-                {!listing.images?.[0] && <div className="text-slate-600 text-4xl">📦</div>}
-                
-                {/* Multiple Images Badge */}
-                {listing.images && listing.images.filter(i => i).length > 1 && (
-                  <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded">
-                    {listing.images.filter(i => i).length} photos
-                  </div>
-                )}
-
-                {/* Video Badge */}
-                {listing.videoUrl && (
-                  <div className="absolute bottom-2 right-2 bg-red-600 text-white px-2 py-1 rounded flex items-center gap-1 text-xs">
-                    <Video size={14} /> Video
-                  </div>
-                )}
-
-                {/* Delivery Option Badge */}
-                {listing.allowsDelivery && (
-                  <div className="absolute bottom-2 left-2 bg-green-600 text-white px-2 py-1 rounded flex items-center gap-1 text-xs">
-                    <Truck size={14} /> Ships
-                  </div>
-                )}
-
-                {/* Seller Verification Badge */}
-                {listing.isSellerVerified && (
-                  <div className="absolute top-2 left-2 bg-blue-600 text-white px-2 py-1 rounded flex items-center gap-1 text-xs">
-                    <CheckCircle size={14} /> Verified
-                  </div>
-                )}
-              </div>
-
-              {/* Info */}
-              <div className="p-4 space-y-3">
-                <div>
-                  <h3 className="font-bold text-white truncate">{listing.title}</h3>
-                  <p className="text-2xl font-black text-blue-400">£{listing.price}</p>
-                </div>
-
-                {/* Condition Rating */}
-                <div className="flex items-center gap-2">
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        size={14}
-                        className={i < parseInt(listing.condition) ? 'fill-yellow-400 text-yellow-400' : 'text-slate-600'}
-                      />
-                    ))}
-                  </div>
-                  <span className="text-xs text-slate-400">Condition</span>
-                </div>
-
-                <div className="space-y-1 text-sm text-slate-400">
-                  <div className="flex items-center gap-2">
-                    <MapPin size={16} />
-                    {listing.location}
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-2 border-t border-slate-700">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleFavorite(listing.id);
-                    }}
-                    className={`flex-1 py-2 rounded font-semibold text-sm transition-colors ${
-                      listing.favorites.includes(currentUser.id)
-                        ? 'bg-red-600/30 text-red-400'
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                    }`}
-                  >
-                    <Heart size={16} className="mx-auto" />
-                  </button>
-                  <button className="flex-1 py-2 bg-slate-700 text-slate-300 rounded font-semibold text-sm hover:bg-slate-600">
-                    <MessageSquare size={16} className="mx-auto" />
-                  </button>
-                </div>
-              </div>
+          {/* GRID */}
+          {filtered.length === 0 ? (
+            <div style={s.emptyState}>
+              <div style={s.emptyIcon}>🏪</div>
+              <div style={s.emptyTitle}>No listings yet</div>
+              <p style={{ marginBottom: "24px" }}>Be the first to post something!</p>
+              <button style={{ ...s.btn, ...s.btnPrimary, padding: "14px 28px", fontSize: "16px" }}
+                onClick={() => setShowPost(true)}>+ Post First Item</button>
             </div>
-          ))}
-        </div>
-
-        {filteredListings.length === 0 && (
-          <div className="text-center py-12 text-slate-500">
-            <p>No listings found. Try adjusting your search or filters.</p>
-          </div>
-        )}
-      </div>
-
-      {/* Listing Detail Modal */}
-      {showListingDetail && (
-        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-4 z-40">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-4 p-6">
-            <div className="flex justify-between items-start">
-              <h2 className="text-2xl font-bold text-white">{showListingDetail.title}</h2>
-              <button onClick={() => setShowListingDetail(null)} className="text-slate-400 hover:text-white">
-                <X size={24} />
-              </button>
-            </div>
-
-            {/* Image Gallery */}
-            {showListingDetail.images && showListingDetail.images.filter(i => i).length > 0 && (
-              <div className="space-y-2">
-                <div className="aspect-video bg-gradient-to-br from-slate-700 to-slate-900 rounded-lg flex items-center justify-center">
-                  <img src={showListingDetail.images[0]} alt="" className="w-full h-full object-cover rounded-lg" />
-                </div>
-                {showListingDetail.images.filter(i => i).length > 1 && (
-                  <div className="flex gap-2 overflow-x-auto">
-                    {showListingDetail.images.filter(i => i).map((img, i) => (
-                      <img key={i} src={img} alt="" className="w-20 h-20 object-cover rounded border border-slate-600 cursor-pointer" />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Video Link */}
-            {showListingDetail.videoUrl && (
-              <div className="bg-red-600/20 border border-red-600/50 p-4 rounded-lg">
-                <p className="font-semibold text-red-400 flex items-center gap-2">
-                  <Video size={18} /> Video Available
-                </p>
-                <p className="text-sm text-slate-400">Watch seller's video tour: <a href={showListingDetail.videoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Open Video</a></p>
-              </div>
-            )}
-
-            {/* Price & Details */}
-            <div className="space-y-3">
-              <p className="text-4xl font-black text-blue-400">£{showListingDetail.price}</p>
-
-              <div className="grid grid-cols-2 gap-4 py-4 border-y border-slate-700">
-                <div>
-                  <p className="text-slate-400 text-sm">Condition</p>
-                  <div className="flex">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        size={16}
-                        className={i < parseInt(showListingDetail.condition) ? 'fill-yellow-400 text-yellow-400' : 'text-slate-600'}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <p className="text-slate-400 text-sm">Location</p>
-                  <p className="font-semibold text-white flex items-center gap-2">
-                    <MapPin size={16} /> {showListingDetail.location}
-                  </p>
-                </div>
-              </div>
-
-              {/* Delivery Options */}
-              <div className="grid grid-cols-2 gap-4">
-                {showListingDetail.allowsLocalPickup && (
-                  <div className="bg-slate-700/50 p-3 rounded-lg">
-                    <p className="text-sm text-slate-300">✓ Local Pickup Available</p>
-                  </div>
-                )}
-                {showListingDetail.allowsDelivery && (
-                  <div className="bg-green-600/20 border border-green-600/50 p-3 rounded-lg">
-                    <p className="text-sm text-green-300 font-semibold">✓ Ships Anywhere</p>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <p className="text-slate-400 text-sm mb-2">Description</p>
-                <p className="text-white">{showListingDetail.itemDescription || showListingDetail.description}</p>
-              </div>
-
-              {/* Video Request Button */}
-              {currentUser.id !== showListingDetail.sellerId && (
-                <button
-                  onClick={() => setShowVideoRequest(showListingDetail)}
-                  className="w-full bg-red-600/20 border border-red-600/50 text-red-400 font-bold py-3 rounded-lg hover:bg-red-600/30 transition-colors flex items-center justify-center gap-2"
-                >
-                  <Video size={20} />
-                  Request Video Inspection
-                </button>
-              )}
-
-              {/* Action Buttons */}
-              {currentUser.id !== showListingDetail.sellerId && (
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setShowMessaging(showListingDetail);
-                      setShowListingDetail(null);
-                    }}
-                    className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold py-3 rounded-lg hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                  >
-                    <MessageSquare size={20} />
-                    Message Seller
-                  </button>
-                  <button
-                    onClick={() => handleFlagListing(showListingDetail.id)}
-                    className="px-4 py-3 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
-                  >
-                    <Flag size={20} />
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Video Request Modal */}
-      {showVideoRequest && (
-        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-4 z-40">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-lg space-y-4 p-6">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Video size={24} /> Request Video Inspection
-            </h2>
-            
-            <div className="space-y-3 text-slate-300">
-              <p>Can't see the item in person? Request a video inspection!</p>
-              <div className="bg-blue-600/20 border border-blue-600/50 p-4 rounded-lg space-y-2">
-                <p className="font-semibold text-blue-300">The seller will:</p>
-                <ul className="text-sm space-y-1 list-disc list-inside">
-                  <li>Film the item from all angles</li>
-                  <li>Show close-ups of condition</li>
-                  <li>Demonstrate it working</li>
-                  <li>Provide proof of authenticity</li>
-                </ul>
-              </div>
-              <p className="text-sm">Response time: Usually within 24 hours</p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => handleVideoRequest(showVideoRequest.id)}
-                className="flex-1 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Request Video
-              </button>
-              <button
-                onClick={() => setShowVideoRequest(null)}
-                className="flex-1 bg-slate-700 text-slate-300 font-bold py-3 rounded-lg hover:bg-slate-600 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Listing Modal */}
-      {showCreateListing && (
-        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-4 z-40">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto space-y-4 p-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-white">Post an Item</h2>
-              <button onClick={() => setShowCreateListing(false)} className="text-slate-400 hover:text-white">
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <input
-                type="text"
-                placeholder="Item title"
-                value={newListing.title}
-                onChange={(e) => setNewListing({ ...newListing, title: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 outline-none"
-              />
-
-              {/* Multiple Images */}
-              <div className="space-y-2">
-                <label className="text-sm text-slate-400">Photos (up to 5)</label>
-                {newListing.images.map((img, i) => (
-                  <input
-                    key={i}
-                    type="text"
-                    placeholder={`Image URL ${i + 1}`}
-                    value={img}
-                    onChange={(e) => {
-                      const updated = [...newListing.images];
-                      updated[i] = e.target.value;
-                      setNewListing({ ...newListing, images: updated });
-                    }}
-                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm placeholder-slate-500 focus:border-blue-500 outline-none"
-                  />
-                ))}
-              </div>
-
-              {/* Condition Rating */}
-              <div>
-                <label className="text-sm text-slate-400">Item Condition (1-5 stars)</label>
-                <select
-                  value={newListing.condition}
-                  onChange={(e) => setNewListing({ ...newListing, condition: e.target.value })}
-                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-blue-500 outline-none"
-                >
-                  <option value="1">⭐ Poor</option>
-                  <option value="2">⭐⭐ Fair</option>
-                  <option value="3">⭐⭐⭐ Good</option>
-                  <option value="4">⭐⭐⭐⭐ Very Good</option>
-                  <option value="5">⭐⭐⭐⭐⭐ Like New</option>
-                </select>
-              </div>
-
-              {/* Video URL */}
-              <input
-                type="text"
-                placeholder="Video URL (YouTube/Vimeo - optional)"
-                value={newListing.videoUrl}
-                onChange={(e) => setNewListing({ ...newListing, videoUrl: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 text-sm focus:border-blue-500 outline-none"
-              />
-
-              <textarea
-                placeholder="Detailed description"
-                value={newListing.itemDescription}
-                onChange={(e) => setNewListing({ ...newListing, itemDescription: e.target.value })}
-                rows="4"
-                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 outline-none"
-              />
-
-              <input
-                type="number"
-                placeholder="Price (£)"
-                value={newListing.price}
-                onChange={(e) => setNewListing({ ...newListing, price: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 outline-none"
-              />
-
-              <select
-                value={newListing.category}
-                onChange={(e) => setNewListing({ ...newListing, category: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:border-blue-500 outline-none"
-              >
-                {categories.slice(1).map(cat => (
-                  <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
-                ))}
-              </select>
-
-              <input
-                type="text"
-                placeholder="Location / City"
-                value={newListing.location}
-                onChange={(e) => setNewListing({ ...newListing, location: e.target.value })}
-                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 outline-none"
-              />
-
-              {/* Delivery Options */}
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={newListing.allowsDelivery}
-                    onChange={(e) => setNewListing({ ...newListing, allowsDelivery: e.target.checked })}
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm text-slate-300">I can ship this item</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={newListing.allowsLocalPickup}
-                    onChange={(e) => setNewListing({ ...newListing, allowsLocalPickup: e.target.checked })}
-                    className="w-4 h-4"
-                  />
-                  <span className="text-sm text-slate-300">Available for local pickup</span>
-                </label>
-              </div>
-
-              <button
-                onClick={handleCreateListing}
-                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold py-3 rounded-lg hover:shadow-lg transition-all"
-              >
-                Post Item
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Messaging Modal */}
-      {showMessaging && (
-        <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center p-4 z-40">
-          <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-lg max-h-[90vh] space-y-4 p-6 flex flex-col">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-bold text-white">{showMessaging.title}</h2>
-              <button onClick={() => setShowMessaging(null)} className="text-slate-400 hover:text-white">
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="flex-1 space-y-3 min-h-64 max-h-64 overflow-y-auto bg-slate-900/50 p-4 rounded-lg">
-              {getConversationMessages(showMessaging.sellerId, showMessaging.id).map((msg, i) => (
-                <div key={i} className={`flex ${msg.from === currentUser.id ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-xs px-4 py-2 rounded-lg ${
-                    msg.from === currentUser.id
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-slate-700 text-white'
-                  }`}>
-                    {msg.text}
+          ) : (
+            <div style={s.grid}>
+              {filtered.map(item => (
+                <div key={item.id} style={s.card} onClick={() => setSelectedListing(item)}
+                  onMouseEnter={e => e.currentTarget.style.transform = "translateY(-4px)"}
+                  onMouseLeave={e => e.currentTarget.style.transform = "translateY(0)"}>
+                  <div style={s.cardImg}>{item.imageEmoji || CATEGORY_ICONS[item.category] || "📦"}</div>
+                  <div style={s.cardBody}>
+                    <div style={s.cardTitle}>{item.title}</div>
+                    <div style={s.cardPrice}>£{item.price}</div>
+                    <div style={s.cardMeta}>
+                      <span style={s.stars}>★★★★★</span> · {item.condition} · {item.location || "UK"}
+                    </div>
+                    <div>
+                      {item.shipsAnywhere
+                        ? <span style={{ ...s.badge, ...s.badgeShip }}>🚚 Ships</span>
+                        : <span style={{ ...s.badge, ...s.badgeLocal }}>📍 Local</span>}
+                      <span style={{ ...s.badge, background: "#f3f4f6", color: "#374151" }}>{item.category}</span>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
+          )}
+        </div>
 
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Type a message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(showMessaging.sellerId, showMessaging.id)}
-                className="flex-1 px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 outline-none"
-              />
-              <button
-                onClick={() => handleSendMessage(showMessaging.sellerId, showMessaging.id)}
-                className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                <Send size={20} />
-              </button>
+        {/* POST MODAL */}
+        {showPost && (
+          <div style={s.modal} onClick={e => e.target === e.currentTarget && setShowPost(false)}>
+            <div style={s.modalBox}>
+              <div style={s.modalHead}>
+                <div style={s.modalTitle}>Post an Item</div>
+                <button style={{ ...s.btn, background: "#f5f5f5", color: "#333" }} onClick={() => setShowPost(false)}>✕</button>
+              </div>
+              <div style={s.modalBody}>
+                <div style={s.field}>
+                  <label style={s.label}>Item Emoji Icon</label>
+                  <select style={s.select} value={newItem.imageEmoji}
+                    onChange={e => setNewItem({ ...newItem, imageEmoji: e.target.value })}>
+                    {["📦", "💻", "📱", "🛋️", "👕", "📚", "🔧", "⚽", "🎮", "🚗", "🏠", "💍"].map(em => (
+                      <option key={em} value={em}>{em}</option>
+                    ))}
+                  </select>
+                </div>
+                <div style={s.field}>
+                  <label style={s.label}>Title *</label>
+                  <input style={s.input} placeholder="What are you selling?"
+                    value={newItem.title} onChange={e => setNewItem({ ...newItem, title: e.target.value })} />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div style={s.field}>
+                    <label style={s.label}>Price (£) *</label>
+                    <input style={s.input} type="number" placeholder="0.00"
+                      value={newItem.price} onChange={e => setNewItem({ ...newItem, price: e.target.value })} />
+                  </div>
+                  <div style={s.field}>
+                    <label style={s.label}>Category</label>
+                    <select style={s.select} value={newItem.category}
+                      onChange={e => setNewItem({ ...newItem, category: e.target.value })}>
+                      {CATEGORIES.filter(c => c !== "All").map(c => <option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div style={s.field}>
+                  <label style={s.label}>Description</label>
+                  <textarea style={{ ...s.input, minHeight: "80px", resize: "vertical" }}
+                    placeholder="Describe your item..."
+                    value={newItem.description} onChange={e => setNewItem({ ...newItem, description: e.target.value })} />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div style={s.field}>
+                    <label style={s.label}>Location</label>
+                    <input style={s.input} placeholder="e.g. London, UK"
+                      value={newItem.location} onChange={e => setNewItem({ ...newItem, location: e.target.value })} />
+                  </div>
+                  <div style={s.field}>
+                    <label style={s.label}>Condition</label>
+                    <select style={s.select} value={newItem.condition}
+                      onChange={e => setNewItem({ ...newItem, condition: e.target.value })}>
+                      {["New", "Like New", "Good", "Fair", "Poor"].map(c => <option key={c}>{c}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div style={s.field}>
+                  <label style={s.label}>Video URL (optional)</label>
+                  <input style={s.input} placeholder="YouTube or Vimeo link for video inspection"
+                    value={newItem.videoUrl} onChange={e => setNewItem({ ...newItem, videoUrl: e.target.value })} />
+                </div>
+                <div style={{ ...s.field, display: "flex", alignItems: "center", gap: "12px" }}>
+                  <input type="checkbox" id="ships" checked={newItem.shipsAnywhere}
+                    onChange={e => setNewItem({ ...newItem, shipsAnywhere: e.target.checked })}
+                    style={{ width: "18px", height: "18px", cursor: "pointer" }} />
+                  <label htmlFor="ships" style={{ cursor: "pointer", fontWeight: "500" }}>
+                    🚚 This item can be shipped anywhere
+                  </label>
+                </div>
+                <button style={{ ...s.btn, ...s.btnPrimary, width: "100%", padding: "14px", fontSize: "16px", borderRadius: "12px" }}
+                  onClick={postItem}>Post Item →</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+
+        {/* DETAIL MODAL */}
+        {selectedListing && (
+          <div style={s.modal} onClick={e => e.target === e.currentTarget && setSelectedListing(null)}>
+            <div style={s.detailModal}>
+              <div style={s.detailImg}>{selectedListing.imageEmoji || "📦"}</div>
+              <div style={{ padding: "28px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
+                  <div>
+                    <div style={{ fontFamily: "'Playfair Display', serif", fontSize: "26px", marginBottom: "4px" }}>
+                      {selectedListing.title}
+                    </div>
+                    <div style={{ fontSize: "28px", fontWeight: "700", color: "#1a1a1a" }}>£{selectedListing.price}</div>
+                  </div>
+                  <button style={{ ...s.btn, background: "#f5f5f5", color: "#333" }} onClick={() => setSelectedListing(null)}>✕</button>
+                </div>
+                <div style={{ marginBottom: "16px" }}>
+                  <span style={s.tag}>{selectedListing.category}</span>
+                  <span style={s.tag}>{selectedListing.condition}</span>
+                  {selectedListing.shipsAnywhere
+                    ? <span style={{ ...s.badge, ...s.badgeShip }}>🚚 Ships Anywhere</span>
+                    : <span style={{ ...s.badge, ...s.badgeLocal }}>📍 Local Pickup</span>}
+                </div>
+                {selectedListing.description && (
+                  <p style={{ color: "#555", lineHeight: 1.6, marginBottom: "16px" }}>{selectedListing.description}</p>
+                )}
+                <div style={{ background: "#f7f5f2", borderRadius: "12px", padding: "16px", marginBottom: "20px" }}>
+                  <div style={{ fontWeight: "600", marginBottom: "8px" }}>Seller Info</div>
+                  <div style={{ color: "#666", fontSize: "14px" }}>👤 {selectedListing.seller}</div>
+                  <div style={{ color: "#666", fontSize: "14px" }}>📍 {selectedListing.location || "UK"}</div>
+                  <div style={{ color: "#666", fontSize: "14px" }}>📅 Listed {selectedListing.date}</div>
+                </div>
+                {selectedListing.videoUrl && (
+                  <a href={selectedListing.videoUrl} target="_blank" rel="noopener noreferrer"
+                    style={{ display: "block", textAlign: "center", padding: "12px", background: "#1a1a1a", color: "#fff", borderRadius: "10px", textDecoration: "none", fontWeight: "600", marginBottom: "12px" }}>
+                    🎥 Watch Video Inspection
+                  </a>
+                )}
+                {!showMsg ? (
+                  <button style={{ ...s.btn, ...s.btnPrimary, width: "100%", padding: "14px", fontSize: "16px", borderRadius: "12px" }}
+                    onClick={() => setShowMsg(true)}>💬 Message Seller</button>
+                ) : (
+                  <div>
+                    <textarea style={{ ...s.input, minHeight: "80px", marginBottom: "10px" }}
+                      placeholder="Hi, I'm interested in your item..."
+                      value={message} onChange={e => setMessage(e.target.value)} />
+                    <button style={{ ...s.btn, ...s.btnGreen, width: "100%", padding: "14px", fontSize: "16px", borderRadius: "12px" }}
+                      onClick={() => { alert(`Message sent to ${selectedListing.seller}!`); setShowMsg(false); setMessage(""); }}>
+                      Send Message ✓
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
