@@ -22,6 +22,9 @@ export default function MyListings() {
     status: "active"
   });
 
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+
   useEffect(() => {
     checkUser();
   }, []);
@@ -58,6 +61,8 @@ export default function MyListings() {
 
   function startEdit(product) {
     setEditingId(product.id);
+    setImageFile(null);
+    setImagePreview(product.image_url || "");
 
     setEditForm({
       title: product.title || "",
@@ -76,6 +81,71 @@ export default function MyListings() {
 
   function cancelEdit() {
     setEditingId(null);
+    setImageFile(null);
+    setImagePreview("");
+  }
+
+  function handleFileChange(e) {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please choose an image file.");
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
+
+  function handlePaste(e) {
+    const items = e.clipboardData?.items;
+
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+
+        if (file) {
+          setImageFile(file);
+          setImagePreview(URL.createObjectURL(file));
+          alert("Image pasted successfully.");
+        }
+
+        return;
+      }
+    }
+  }
+
+  async function uploadImageIfNeeded() {
+    if (!imageFile) {
+      return editForm.image_url || "";
+    }
+
+    const fileExt = imageFile.name.split(".").pop() || "jpg";
+
+    const fileName = `${user.id}/${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2)}.${fileExt}`;
+
+    const { error } = await supabase.storage
+      .from("product-images")
+      .upload(fileName, imageFile, {
+        cacheControl: "3600",
+        upsert: false
+      });
+
+    if (error) {
+      throw new Error("Image upload failed: " + error.message);
+    }
+
+    const { data } = supabase.storage
+      .from("product-images")
+      .getPublicUrl(fileName);
+
+    return data.publicUrl;
   }
 
   async function saveListing(productId) {
@@ -84,36 +154,44 @@ export default function MyListings() {
       return;
     }
 
-    setSaving(true);
+    try {
+      setSaving(true);
 
-    const { error } = await supabase
-      .from("products")
-      .update({
-        title: editForm.title,
-        description: editForm.description,
-        price: Number(editForm.price),
-        old_price: editForm.old_price ? Number(editForm.old_price) : null,
-        location: editForm.location,
-        category: editForm.category,
-        image_url: editForm.image_url,
-        seller_name: editForm.seller_name,
-        affiliate_url: editForm.affiliate_url,
-        source_website: editForm.source_website,
-        status: editForm.status
-      })
-      .eq("id", productId)
-      .eq("user_id", user.id);
+      const finalImageUrl = await uploadImageIfNeeded();
 
-    setSaving(false);
+      const { error } = await supabase
+        .from("products")
+        .update({
+          title: editForm.title,
+          description: editForm.description,
+          price: Number(editForm.price),
+          old_price: editForm.old_price ? Number(editForm.old_price) : null,
+          location: editForm.location,
+          category: editForm.category,
+          image_url: finalImageUrl,
+          seller_name: editForm.seller_name,
+          affiliate_url: editForm.affiliate_url,
+          source_website: editForm.source_website,
+          status: editForm.status
+        })
+        .eq("id", productId)
+        .eq("user_id", user.id);
 
-    if (error) {
-      alert("Could not save listing: " + error.message);
-      return;
+      if (error) {
+        alert("Could not save listing: " + error.message);
+        return;
+      }
+
+      alert("Listing updated successfully.");
+      setEditingId(null);
+      setImageFile(null);
+      setImagePreview("");
+      fetchMyListings(user.id);
+    } catch (error) {
+      alert(error.message || "Something went wrong.");
+    } finally {
+      setSaving(false);
     }
-
-    alert("Listing updated successfully.");
-    setEditingId(null);
-    fetchMyListings(user.id);
   }
 
   async function markSold(productId) {
@@ -311,16 +389,39 @@ export default function MyListings() {
                         <option>Services</option>
                       </select>
 
-                      <label>Image URL</label>
+                      <label>Product image</label>
+
+                      <div
+                        className="uploadBox"
+                        onPaste={handlePaste}
+                        tabIndex={0}
+                      >
+                        {imagePreview ? (
+                          <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="previewImage"
+                          />
+                        ) : (
+                          <div>
+                            <p>
+                              <strong>Paste image here</strong>
+                            </p>
+                            <p>Or choose an image from your phone/computer below.</p>
+                          </div>
+                        )}
+                      </div>
+
                       <input
-                        value={editForm.image_url}
-                        onChange={(e) =>
-                          setEditForm({
-                            ...editForm,
-                            image_url: e.target.value
-                          })
-                        }
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
                       />
+
+                      <p className="helperText">
+                        Tip: click inside the image box, then press Ctrl + V to
+                        paste an image. On mobile, use Choose File.
+                      </p>
 
                       <label>Seller / store name</label>
                       <input
@@ -340,6 +441,17 @@ export default function MyListings() {
                           setEditForm({
                             ...editForm,
                             affiliate_url: e.target.value
+                          })
+                        }
+                      />
+
+                      <label>Source website</label>
+                      <input
+                        value={editForm.source_website}
+                        onChange={(e) =>
+                          setEditForm({
+                            ...editForm,
+                            source_website: e.target.value
                           })
                         }
                       />
@@ -397,7 +509,9 @@ export default function MyListings() {
                       <p className="price">£{product.price}</p>
 
                       {product.old_price && (
-                        <p className="oldPrice">Old price: £{product.old_price}</p>
+                        <p className="oldPrice">
+                          Old price: £{product.old_price}
+                        </p>
                       )}
 
                       <p className="smallText">
@@ -537,7 +651,7 @@ export default function MyListings() {
           border: 1px solid #e5e7eb;
         }
 
-        .listingCard img {
+        .listingCard > img {
           width: 100%;
           height: 100%;
           min-height: 230px;
@@ -619,6 +733,11 @@ export default function MyListings() {
           font-weight: 700;
         }
 
+        button:disabled {
+          background: #777;
+          cursor: not-allowed;
+        }
+
         .editButton,
         .saveButton {
           background: #111827;
@@ -666,6 +785,45 @@ export default function MyListings() {
           min-height: 100px;
         }
 
+        .uploadBox {
+          width: 100%;
+          min-height: 220px;
+          border: 2px dashed #cbd5e1;
+          border-radius: 14px;
+          background: #f9fafb;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          padding: 20px;
+          cursor: pointer;
+          margin-bottom: 12px;
+          outline: none;
+        }
+
+        .uploadBox:focus {
+          border-color: #f4b400;
+          box-shadow: 0 0 0 3px rgba(244, 180, 0, 0.2);
+        }
+
+        .uploadBox p {
+          color: #555;
+          margin: 6px 0;
+        }
+
+        .previewImage {
+          max-width: 100%;
+          max-height: 320px;
+          border-radius: 12px;
+          object-fit: contain;
+        }
+
+        .helperText {
+          color: #6b7280;
+          font-size: 13px;
+          margin-top: 4px;
+        }
+
         @media (max-width: 760px) {
           .header {
             flex-direction: column;
@@ -695,7 +853,7 @@ export default function MyListings() {
             grid-template-columns: 1fr;
           }
 
-          .listingCard img {
+          .listingCard > img {
             height: 220px;
           }
 
@@ -710,6 +868,10 @@ export default function MyListings() {
 
           button {
             width: 100%;
+          }
+
+          .uploadBox {
+            min-height: 180px;
           }
         }
       `}</style>
