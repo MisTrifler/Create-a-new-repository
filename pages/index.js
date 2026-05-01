@@ -1,8 +1,21 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
+const categories = [
+  "All",
+  "Electronics",
+  "Phones",
+  "Home",
+  "Fashion",
+  "Cars",
+  "Beauty",
+  "Fitness",
+  "Services"
+];
+
 export default function Home() {
   const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("All");
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
@@ -53,21 +66,14 @@ export default function Home() {
     alert("Logged out successfully.");
   }
 
-  const filteredProducts = products.filter((product) => {
-    const value = search.toLowerCase();
+  function openProduct(product) {
+    if (product.affiliate_url && product.affiliate_url.startsWith("http")) {
+      window.location.href = product.affiliate_url;
+      return;
+    }
 
-    return (
-      search === "" ||
-      product.title?.toLowerCase().includes(value) ||
-      product.location?.toLowerCase().includes(value) ||
-      product.category?.toLowerCase().includes(value) ||
-      product.seller_name?.toLowerCase().includes(value)
-    );
-  });
-
-  function contactSeller(product) {
-    if (product.product_url && product.product_url.startsWith("http")) {
-      window.location.href = product.product_url;
+    if (product.affiliate_url && product.affiliate_url.startsWith("mailto:")) {
+      window.location.href = product.affiliate_url;
       return;
     }
 
@@ -76,60 +82,110 @@ export default function Home() {
       return;
     }
 
-    alert("No contact details available for this product.");
+    alert("No valid link found for this product.");
   }
+
+  const filteredProducts = products.filter((product) => {
+    const value = search.toLowerCase();
+
+    const matchesSearch =
+      search === "" ||
+      product.title?.toLowerCase().includes(value) ||
+      product.description?.toLowerCase().includes(value) ||
+      product.location?.toLowerCase().includes(value) ||
+      product.category?.toLowerCase().includes(value) ||
+      product.source_website?.toLowerCase().includes(value);
+
+    const matchesCategory =
+      category === "All" || product.category === category;
+
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div
       style={{
         fontFamily: "Arial, sans-serif",
-        background: "#f8fafc",
+        background: "#f3f4f6",
         minHeight: "100vh"
       }}
     >
-      {/* HEADER */}
+      {/* TOP BAR */}
       <div
         style={{
+          background: "#111827",
+          color: "white",
+          padding: "12px 40px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          padding: "20px 40px",
-          background: "white",
-          borderBottom: "1px solid #e5e7eb",
           position: "sticky",
           top: 0,
-          zIndex: 10
+          zIndex: 20
         }}
       >
-        <a href="/" style={{ textDecoration: "none", color: "#111" }}>
+        <a href="/" style={{ textDecoration: "none", color: "white" }}>
           <h2 style={{ margin: 0 }}>LocalDeal</h2>
         </a>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
+        <div style={{ flex: 1, margin: "0 30px", display: "flex" }}>
+          <input
+            placeholder="Search products, deals, categories..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              flex: 1,
+              padding: "13px",
+              border: "none",
+              borderRadius: "8px 0 0 8px",
+              fontSize: "15px"
+            }}
+          />
+
+          <button
+            onClick={() => {
+              document
+                .getElementById("products-section")
+                ?.scrollIntoView({ behavior: "smooth" });
+            }}
+            style={{
+              padding: "13px 22px",
+              background: "#f4b400",
+              border: "none",
+              borderRadius: "0 8px 8px 0",
+              cursor: "pointer",
+              fontWeight: "bold"
+            }}
+          >
+            Search
+          </button>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
           <a
             href="/post-product"
             style={{
+              color: "white",
               textDecoration: "none",
-              color: "#111",
               fontWeight: "500"
             }}
           >
-            Post Product
+            Sell
           </a>
 
           {user ? (
             <>
-              <span style={{ fontSize: "14px", color: "#555" }}>
+              <span style={{ fontSize: "13px", color: "#d1d5db" }}>
                 {user.email}
               </span>
 
               <button
                 onClick={logout}
                 style={{
-                  padding: "10px 16px",
                   background: "#ef4444",
                   color: "white",
                   border: "none",
+                  padding: "9px 13px",
                   borderRadius: "8px",
                   cursor: "pointer",
                   fontWeight: "600"
@@ -142,11 +198,7 @@ export default function Home() {
             <>
               <a
                 href="/login"
-                style={{
-                  textDecoration: "none",
-                  color: "#111",
-                  fontWeight: "500"
-                }}
+                style={{ color: "white", textDecoration: "none" }}
               >
                 Login
               </a>
@@ -154,12 +206,12 @@ export default function Home() {
               <a
                 href="/signup"
                 style={{
-                  padding: "10px 16px",
-                  background: "#111827",
-                  color: "white",
+                  color: "#111827",
+                  background: "#f4b400",
                   textDecoration: "none",
+                  padding: "9px 13px",
                   borderRadius: "8px",
-                  fontWeight: "600"
+                  fontWeight: "700"
                 }}
               >
                 Sign Up
@@ -169,212 +221,354 @@ export default function Home() {
         </div>
       </div>
 
+      {/* CATEGORY BAR */}
+      <div
+        style={{
+          background: "#1f2937",
+          padding: "10px 40px",
+          display: "flex",
+          gap: "12px",
+          overflowX: "auto"
+        }}
+      >
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setCategory(cat)}
+            style={{
+              background: category === cat ? "#f4b400" : "transparent",
+              color: category === cat ? "#111827" : "white",
+              border: "1px solid #374151",
+              padding: "8px 14px",
+              borderRadius: "999px",
+              cursor: "pointer",
+              fontWeight: "600",
+              whiteSpace: "nowrap"
+            }}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
       {/* HERO */}
       <div
         style={{
-          textAlign: "center",
-          padding: "80px 20px",
-          background: "white"
+          padding: "55px 40px",
+          background:
+            "linear-gradient(135deg, #fef3c7 0%, #ffffff 45%, #dbeafe 100%)"
         }}
       >
-        <h1
+        <div
           style={{
-            fontSize: "52px",
-            marginBottom: "15px",
-            lineHeight: "1.1"
+            maxWidth: "1200px",
+            margin: "0 auto",
+            display: "grid",
+            gridTemplateColumns: "1.4fr 1fr",
+            gap: "35px",
+            alignItems: "center"
           }}
         >
-          Buy and Sell Local Products Near You
-        </h1>
+          <div>
+            <h1
+              style={{
+                fontSize: "54px",
+                lineHeight: "1.05",
+                marginBottom: "18px"
+              }}
+            >
+              Shop local deals and partner products in one place
+            </h1>
 
-        <p
-          style={{
-            color: "#555",
-            fontSize: "18px",
-            marginBottom: "30px"
-          }}
-        >
-          Find local deals, second-hand products, services and offers from people
-          and businesses nearby.
-        </p>
+            <p
+              style={{
+                fontSize: "18px",
+                color: "#4b5563",
+                marginBottom: "24px"
+              }}
+            >
+              Discover products from local sellers and trusted partner websites.
+              Some links may earn LocalDeal a commission.
+            </p>
 
-        <input
-          placeholder="Search by town, product or category"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            padding: "15px",
-            width: "320px",
-            borderRadius: "10px",
-            border: "1px solid #ccc",
-            marginRight: "10px",
-            fontSize: "15px"
-          }}
-        />
+            <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+              <a
+                href="#products-section"
+                style={{
+                  background: "#111827",
+                  color: "white",
+                  padding: "14px 20px",
+                  borderRadius: "10px",
+                  textDecoration: "none",
+                  fontWeight: "700"
+                }}
+              >
+                Browse Products
+              </a>
 
-        <button
-          onClick={() => {
-            document
-              .getElementById("products-section")
-              ?.scrollIntoView({ behavior: "smooth" });
-          }}
-          style={{
-            padding: "15px 26px",
-            background: "#f4b400",
-            border: "none",
-            borderRadius: "10px",
-            cursor: "pointer",
-            fontWeight: "bold",
-            fontSize: "15px"
-          }}
-        >
-          Search
-        </button>
+              <a
+                href="/post-product"
+                style={{
+                  background: "white",
+                  color: "#111827",
+                  padding: "14px 20px",
+                  borderRadius: "10px",
+                  textDecoration: "none",
+                  fontWeight: "700",
+                  border: "1px solid #d1d5db"
+                }}
+              >
+                Sell Your Product
+              </a>
+            </div>
+          </div>
+
+          <div
+            style={{
+              background: "white",
+              borderRadius: "18px",
+              padding: "25px",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.1)"
+            }}
+          >
+            <h3 style={{ marginTop: 0 }}>How commissions work</h3>
+            <p style={{ color: "#555" }}>
+              Join affiliate programmes, paste your tracked affiliate links into
+              products, and earn when buyers purchase through your links.
+            </p>
+            <ul style={{ color: "#555", lineHeight: "1.8" }}>
+              <li>Amazon Associates links</li>
+              <li>eBay Partner Network links</li>
+              <li>Awin partner brand links</li>
+              <li>Local sellers can post their own items</li>
+            </ul>
+          </div>
+        </div>
       </div>
 
       {/* PRODUCTS */}
-      <div id="products-section" style={{ padding: "55px 45px" }}>
+      <div id="products-section" style={{ padding: "45px 40px" }}>
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "25px"
+            maxWidth: "1300px",
+            margin: "0 auto"
           }}
         >
-          <h2 style={{ fontSize: "28px", margin: 0 }}>🔥 Latest Products</h2>
-
-          <a
-            href="/post-product"
+          <div
             style={{
-              padding: "12px 18px",
-              background: "#111827",
-              color: "white",
-              borderRadius: "8px",
-              textDecoration: "none",
-              fontWeight: "600"
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: "24px"
             }}
           >
-            Sell Something
-          </a>
-        </div>
+            <h2 style={{ fontSize: "30px", margin: 0 }}>
+              🔥 Featured Products
+            </h2>
 
-        {loading && <p>Loading products...</p>}
-
-        {!loading && filteredProducts.length === 0 && (
-          <p>No products found. Try another search or post the first product.</p>
-        )}
-
-        <div
-          style={{
-            display: "flex",
-            gap: "28px",
-            flexWrap: "wrap"
-          }}
-        >
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
+            <a
+              href="/post-product"
               style={{
-                width: "285px",
-                background: "white",
-                borderRadius: "16px",
-                overflow: "hidden",
-                border: "1px solid #e5e7eb",
-                boxShadow: "0 6px 18px rgba(0,0,0,0.08)"
+                background: "#111827",
+                color: "white",
+                padding: "12px 18px",
+                borderRadius: "8px",
+                textDecoration: "none",
+                fontWeight: "700"
               }}
             >
-              <img
-                src={
-                  product.image_url ||
-                  "https://images.unsplash.com/photo-1607082349566-187342175e2f"
-                }
-                alt={product.title || "Product"}
-                onError={(e) => {
-                  e.currentTarget.src =
-                    "https://images.unsplash.com/photo-1607082349566-187342175e2f";
-                }}
-                style={{
-                  width: "100%",
-                  height: "180px",
-                  objectFit: "cover"
-                }}
-              />
+              Post Product
+            </a>
+          </div>
 
-              <div style={{ padding: "18px" }}>
-                <p
+          <p style={{ color: "#666", marginBottom: "25px" }}>
+            Affiliate disclosure: some outbound links may earn LocalDeal a
+            commission at no extra cost to the buyer.
+          </p>
+
+          {loading && <p>Loading products...</p>}
+
+          {!loading && filteredProducts.length === 0 && (
+            <p>No products found. Try another search or post the first item.</p>
+          )}
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))",
+              gap: "22px"
+            }}
+          >
+            {filteredProducts.map((product) => {
+              const discount =
+                product.old_price && product.price
+                  ? Math.round(
+                      ((product.old_price - product.price) /
+                        product.old_price) *
+                        100
+                    )
+                  : null;
+
+              return (
+                <div
+                  key={product.id}
                   style={{
-                    color: "#666",
-                    fontSize: "14px",
-                    margin: "0 0 8px"
+                    background: "white",
+                    borderRadius: "14px",
+                    overflow: "hidden",
+                    border: "1px solid #e5e7eb",
+                    boxShadow: "0 4px 14px rgba(0,0,0,0.08)"
                   }}
                 >
-                  {product.category || "General"} ·{" "}
-                  {product.location || "Local Area"}
-                </p>
+                  <div style={{ position: "relative" }}>
+                    <img
+                      src={
+                        product.image_url ||
+                        "https://images.unsplash.com/photo-1607082349566-187342175e2f"
+                      }
+                      alt={product.title || "Product"}
+                      onError={(e) => {
+                        e.currentTarget.src =
+                          "https://images.unsplash.com/photo-1607082349566-187342175e2f";
+                      }}
+                      style={{
+                        width: "100%",
+                        height: "190px",
+                        objectFit: "cover"
+                      }}
+                    />
 
-                <h3 style={{ margin: "0 0 12px", fontSize: "20px" }}>
-                  {product.title}
-                </h3>
+                    {product.is_affiliate && (
+                      <span
+                        style={{
+                          position: "absolute",
+                          top: "10px",
+                          left: "10px",
+                          background: "#f4b400",
+                          color: "#111827",
+                          padding: "5px 8px",
+                          borderRadius: "999px",
+                          fontSize: "12px",
+                          fontWeight: "700"
+                        }}
+                      >
+                        Partner
+                      </span>
+                    )}
+                  </div>
 
-                {product.description && (
-                  <p
-                    style={{
-                      color: "#555",
-                      fontSize: "14px",
-                      minHeight: "40px"
-                    }}
-                  >
-                    {product.description}
-                  </p>
-                )}
+                  <div style={{ padding: "15px" }}>
+                    <p
+                      style={{
+                        color: "#6b7280",
+                        fontSize: "13px",
+                        margin: "0 0 6px"
+                      }}
+                    >
+                      {product.source_website || "LocalDeal"} ·{" "}
+                      {product.category || "General"}
+                    </p>
 
-                <p
-                  style={{
-                    fontSize: "22px",
-                    fontWeight: "bold",
-                    margin: "12px 0"
-                  }}
-                >
-                  £{product.price}
-                </p>
+                    <h3
+                      style={{
+                        margin: "0 0 10px",
+                        fontSize: "17px",
+                        lineHeight: "1.25",
+                        minHeight: "42px"
+                      }}
+                    >
+                      {product.title}
+                    </h3>
 
-                <p style={{ color: "#666", fontSize: "14px" }}>
-                  Seller: {product.seller_name || "Local Seller"}
-                </p>
+                    <p
+                      style={{
+                        color: "#555",
+                        fontSize: "14px",
+                        minHeight: "42px"
+                      }}
+                    >
+                      {product.description}
+                    </p>
 
-                <button
-                  onClick={() => contactSeller(product)}
-                  style={{
-                    width: "100%",
-                    padding: "13px",
-                    background: "#111827",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "10px",
-                    cursor: "pointer",
-                    fontWeight: "bold",
-                    marginTop: "12px"
-                  }}
-                >
-                  Contact Seller
-                </button>
-              </div>
-            </div>
-          ))}
+                    <div style={{ margin: "12px 0" }}>
+                      <span
+                        style={{
+                          fontSize: "22px",
+                          fontWeight: "800",
+                          color: "#111827"
+                        }}
+                      >
+                        £{product.price}
+                      </span>
+
+                      {product.old_price && (
+                        <span
+                          style={{
+                            marginLeft: "8px",
+                            color: "#6b7280",
+                            textDecoration: "line-through"
+                          }}
+                        >
+                          £{product.old_price}
+                        </span>
+                      )}
+                    </div>
+
+                    {discount !== null && (
+                      <p
+                        style={{
+                          color: "green",
+                          fontWeight: "700",
+                          margin: "0 0 12px"
+                        }}
+                      >
+                        {discount}% OFF
+                      </p>
+                    )}
+
+                    <p style={{ fontSize: "13px", color: "#6b7280" }}>
+                      📍 {product.location || "Online"}
+                    </p>
+
+                    <button
+                      onClick={() => openProduct(product)}
+                      style={{
+                        width: "100%",
+                        padding: "12px",
+                        background: "#111827",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "9px",
+                        cursor: "pointer",
+                        fontWeight: "700",
+                        marginTop: "10px"
+                      }}
+                    >
+                      {product.is_affiliate
+                        ? "View Partner Deal"
+                        : "Contact Seller"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* FOOTER */}
       <div
         style={{
+          background: "#111827",
+          color: "#d1d5db",
           textAlign: "center",
-          padding: "45px",
-          color: "#666"
+          padding: "35px"
         }}
       >
-        <p>🔥 New local listings added daily</p>
-        <p>📍 Built for local buyers, sellers and businesses</p>
+        <p style={{ margin: 0 }}>
+          LocalDeal may earn commission from partner links. Local seller listings
+          are posted by users.
+        </p>
       </div>
     </div>
   );
