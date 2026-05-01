@@ -32,7 +32,8 @@ export default function PrivacyPolicy() {
         <p>
           Product listings may include seller names, general locations, product
           descriptions, prices and images. Sellers should not post private
-          addresses or sensitive personal information in listings.
+          addresses, full home postcodes or sensitive personal information in
+          listings.
         </p>
 
         <h2>Reviews</h2>
@@ -40,6 +41,13 @@ export default function PrivacyPolicy() {
           Users may leave reviews about sellers. Reviews are intended to help
           buyers and sellers understand who may be genuine and reliable. Reviews
           should be honest, fair and not abusive.
+        </p>
+
+        <h2>Location information</h2>
+        <p>
+          LocalDeal may ask users to enter a town, city or postcode area, or use
+          browser location permission to help show relevant local listings. Users
+          can change or clear their selected area at any time.
         </p>
 
         <h2>Affiliate links</h2>
@@ -58,8 +66,9 @@ export default function PrivacyPolicy() {
 
         <h2>Cookies</h2>
         <p>
-          Cookies may be used for login, analytics, advertising and improving
-          user experience. You can control cookies through your browser settings.
+          Cookies may be used for login, analytics, advertising, remembering your
+          chosen location area and improving user experience. You can control
+          cookies through your browser settings.
         </p>
 
         <h2>Third-party websites</h2>
@@ -129,7 +138,9 @@ const headerStyle = {
   color: "white",
   display: "flex",
   justifyContent: "space-between",
-  alignItems: "center"
+  alignItems: "center",
+  gap: "20px",
+  flexWrap: "wrap"
 };
 
 const logoStyle = {
