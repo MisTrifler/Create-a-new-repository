@@ -2,43 +2,82 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 export default function Home() {
-  const [postcode, setPostcode] = useState("");
-  const [deals, setDeals] = useState([]);
+  const [search, setSearch] = useState("");
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    fetchDeals();
+    checkUser();
+    fetchProducts();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user || null);
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
-  async function fetchDeals() {
+  async function checkUser() {
+    const { data } = await supabase.auth.getUser();
+    setUser(data?.user || null);
+  }
+
+  async function fetchProducts() {
     setLoading(true);
 
     const { data, error } = await supabase
-      .from("deals")
+      .from("products")
       .select("*")
+      .eq("status", "active")
       .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Supabase error:", error);
       alert("Supabase error: " + error.message);
-      setDeals([]);
+      setProducts([]);
     } else {
-      setDeals(data || []);
+      setProducts(data || []);
     }
 
     setLoading(false);
   }
 
-  const filteredDeals = deals.filter((deal) => {
-    const search = postcode.toLowerCase();
+  async function logout() {
+    await supabase.auth.signOut();
+    setUser(null);
+    alert("Logged out successfully.");
+  }
+
+  const filteredProducts = products.filter((product) => {
+    const value = search.toLowerCase();
 
     return (
-      postcode === "" ||
-      deal.location?.toLowerCase().includes(search) ||
-      deal.title?.toLowerCase().includes(search) ||
-      deal.business_name?.toLowerCase().includes(search)
+      search === "" ||
+      product.title?.toLowerCase().includes(value) ||
+      product.location?.toLowerCase().includes(value) ||
+      product.category?.toLowerCase().includes(value) ||
+      product.seller_name?.toLowerCase().includes(value)
     );
   });
+
+  function contactSeller(product) {
+    if (product.product_url && product.product_url.startsWith("http")) {
+      window.location.href = product.product_url;
+      return;
+    }
+
+    if (product.contact_email) {
+      window.location.href = `mailto:${product.contact_email}?subject=Interested in ${product.title}`;
+      return;
+    }
+
+    alert("No contact details available for this product.");
+  }
 
   return (
     <div
@@ -66,44 +105,67 @@ export default function Home() {
           <h2 style={{ margin: 0 }}>LocalDeal</h2>
         </a>
 
-        <div>
+        <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
           <a
-            href="/post-deal"
+            href="/post-product"
             style={{
-              marginRight: "20px",
               textDecoration: "none",
               color: "#111",
               fontWeight: "500"
             }}
           >
-            Post Deal
+            Post Product
           </a>
 
-          <a
-            href="/login"
-            style={{
-              marginRight: "20px",
-              textDecoration: "none",
-              color: "#111",
-              fontWeight: "500"
-            }}
-          >
-            Login
-          </a>
+          {user ? (
+            <>
+              <span style={{ fontSize: "14px", color: "#555" }}>
+                {user.email}
+              </span>
 
-          <a
-            href="/signup"
-            style={{
-              padding: "10px 16px",
-              background: "#111827",
-              color: "white",
-              textDecoration: "none",
-              borderRadius: "8px",
-              fontWeight: "600"
-            }}
-          >
-            Sign Up
-          </a>
+              <button
+                onClick={logout}
+                style={{
+                  padding: "10px 16px",
+                  background: "#ef4444",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontWeight: "600"
+                }}
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <a
+                href="/login"
+                style={{
+                  textDecoration: "none",
+                  color: "#111",
+                  fontWeight: "500"
+                }}
+              >
+                Login
+              </a>
+
+              <a
+                href="/signup"
+                style={{
+                  padding: "10px 16px",
+                  background: "#111827",
+                  color: "white",
+                  textDecoration: "none",
+                  borderRadius: "8px",
+                  fontWeight: "600"
+                }}
+              >
+                Sign Up
+              </a>
+            </>
+          )}
         </div>
       </div>
 
@@ -122,7 +184,7 @@ export default function Home() {
             lineHeight: "1.1"
           }}
         >
-          Find the Best Local Deals Near You
+          Buy and Sell Local Products Near You
         </h1>
 
         <p
@@ -132,16 +194,17 @@ export default function Home() {
             marginBottom: "30px"
           }}
         >
-          Save money on food, gyms, car washes, beauty, services and more.
+          Find local deals, second-hand products, services and offers from people
+          and businesses nearby.
         </p>
 
         <input
-          placeholder="Enter town or postcode"
-          value={postcode}
-          onChange={(e) => setPostcode(e.target.value)}
+          placeholder="Search by town, product or category"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           style={{
             padding: "15px",
-            width: "280px",
+            width: "320px",
             borderRadius: "10px",
             border: "1px solid #ccc",
             marginRight: "10px",
@@ -152,7 +215,7 @@ export default function Home() {
         <button
           onClick={() => {
             document
-              .getElementById("deals-section")
+              .getElementById("products-section")
               ?.scrollIntoView({ behavior: "smooth" });
           }}
           style={{
@@ -165,20 +228,41 @@ export default function Home() {
             fontSize: "15px"
           }}
         >
-          Search Deals
+          Search
         </button>
       </div>
 
-      {/* DEALS */}
-      <div id="deals-section" style={{ padding: "55px 45px" }}>
-        <h2 style={{ marginBottom: "25px", fontSize: "28px" }}>
-          🔥 Deals Near You
-        </h2>
+      {/* PRODUCTS */}
+      <div id="products-section" style={{ padding: "55px 45px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "25px"
+          }}
+        >
+          <h2 style={{ fontSize: "28px", margin: 0 }}>🔥 Latest Products</h2>
 
-        {loading && <p>Loading deals...</p>}
+          <a
+            href="/post-product"
+            style={{
+              padding: "12px 18px",
+              background: "#111827",
+              color: "white",
+              borderRadius: "8px",
+              textDecoration: "none",
+              fontWeight: "600"
+            }}
+          >
+            Sell Something
+          </a>
+        </div>
 
-        {!loading && filteredDeals.length === 0 && (
-          <p>No deals found. Try another town or postcode.</p>
+        {loading && <p>Loading products...</p>}
+
+        {!loading && filteredProducts.length === 0 && (
+          <p>No products found. Try another search or post the first product.</p>
         )}
 
         <div
@@ -188,113 +272,96 @@ export default function Home() {
             flexWrap: "wrap"
           }}
         >
-          {filteredDeals.map((deal) => {
-            const discount =
-              deal.old_price && deal.price
-                ? Math.round(
-                    ((deal.old_price - deal.price) / deal.old_price) * 100
-                  )
-                : null;
-
-            return (
-              <div
-                key={deal.id}
-                style={{
-                  width: "285px",
-                  background: "white",
-                  borderRadius: "16px",
-                  overflow: "hidden",
-                  border: "1px solid #e5e7eb",
-                  boxShadow: "0 6px 18px rgba(0,0,0,0.08)"
+          {filteredProducts.map((product) => (
+            <div
+              key={product.id}
+              style={{
+                width: "285px",
+                background: "white",
+                borderRadius: "16px",
+                overflow: "hidden",
+                border: "1px solid #e5e7eb",
+                boxShadow: "0 6px 18px rgba(0,0,0,0.08)"
+              }}
+            >
+              <img
+                src={
+                  product.image_url ||
+                  "https://images.unsplash.com/photo-1607082349566-187342175e2f"
+                }
+                alt={product.title || "Product"}
+                onError={(e) => {
+                  e.currentTarget.src =
+                    "https://images.unsplash.com/photo-1607082349566-187342175e2f";
                 }}
-              >
-                <img
-                  src={
-                    deal.image_url ||
-                    "https://images.unsplash.com/photo-1607082349566-187342175e2f"
-                  }
-                  alt={deal.title || "Local deal"}
-                  onError={(e) => {
-                    e.currentTarget.src =
-                      "https://images.unsplash.com/photo-1607082349566-187342175e2f";
-                  }}
-                  style={{
-                    width: "100%",
-                    height: "180px",
-                    objectFit: "cover"
-                  }}
-                />
+                style={{
+                  width: "100%",
+                  height: "180px",
+                  objectFit: "cover"
+                }}
+              />
 
-                <div style={{ padding: "18px" }}>
+              <div style={{ padding: "18px" }}>
+                <p
+                  style={{
+                    color: "#666",
+                    fontSize: "14px",
+                    margin: "0 0 8px"
+                  }}
+                >
+                  {product.category || "General"} ·{" "}
+                  {product.location || "Local Area"}
+                </p>
+
+                <h3 style={{ margin: "0 0 12px", fontSize: "20px" }}>
+                  {product.title}
+                </h3>
+
+                {product.description && (
                   <p
                     style={{
-                      color: "#666",
+                      color: "#555",
                       fontSize: "14px",
-                      margin: "0 0 8px"
+                      minHeight: "40px"
                     }}
                   >
-                    {deal.business_name || "Local Business"} ·{" "}
-                    {deal.location || "Local Area"}
+                    {product.description}
                   </p>
+                )}
 
-                  <h3 style={{ margin: "0 0 12px", fontSize: "20px" }}>
-                    {deal.title}
-                  </h3>
+                <p
+                  style={{
+                    fontSize: "22px",
+                    fontWeight: "bold",
+                    margin: "12px 0"
+                  }}
+                >
+                  £{product.price}
+                </p>
 
-                  {deal.description && (
-                    <p
-                      style={{
-                        color: "#555",
-                        fontSize: "14px",
-                        minHeight: "38px"
-                      }}
-                    >
-                      {deal.description}
-                    </p>
-                  )}
+                <p style={{ color: "#666", fontSize: "14px" }}>
+                  Seller: {product.seller_name || "Local Seller"}
+                </p>
 
-                  <p style={{ fontSize: "18px", marginBottom: "8px" }}>
-                    {deal.old_price && <s>£{deal.old_price}</s>}{" "}
-                    <b>£{deal.price}</b>
-                  </p>
-
-                  {discount !== null && (
-                    <p
-                      style={{
-                        color: "green",
-                        fontWeight: "bold",
-                        marginBottom: "14px"
-                      }}
-                    >
-                      {discount}% OFF
-                    </p>
-                  )}
-
-                  <button
-                    onClick={() => {
-                      if (deal.deal_url && deal.deal_url.startsWith("http")) {
-                        window.location.href = deal.deal_url;
-                      } else {
-                        alert("No valid link found for this deal.");
-                      }
-                    }}
-                    style={{
-                      width: "100%",
-                      padding: "13px",
-                      background: "#111827",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "10px",
-                      cursor: "pointer",
-                      fontWeight: "bold"
-                    }}
-                  >
-                    View Deal
-                  </button>
-                </div>
+                <button
+                  onClick={() => contactSeller(product)}
+                  style={{
+                    width: "100%",
+                    padding: "13px",
+                    background: "#111827",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "10px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    marginTop: "12px"
+                  }}
+                >
+                  Contact Seller
+                </button>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -306,8 +373,8 @@ export default function Home() {
           color: "#666"
         }}
       >
-        <p>🔥 New local deals added daily</p>
-        <p>📍 Built for local businesses and local customers</p>
+        <p>🔥 New local listings added daily</p>
+        <p>📍 Built for local buyers, sellers and businesses</p>
       </div>
     </div>
   );
