@@ -154,6 +154,11 @@ export default function MyListings() {
       return;
     }
 
+    if (Number(editForm.price) < 0) {
+      alert("Price cannot be negative.");
+      return;
+    }
+
     try {
       setSaving(true);
 
@@ -274,6 +279,9 @@ export default function MyListings() {
             <a href="/post-product" className="navLink">
               Post Product
             </a>
+            <a href="/messages" className="navLink">
+              Messages
+            </a>
           </nav>
         </header>
 
@@ -281,7 +289,10 @@ export default function MyListings() {
           <div className="topSection">
             <div>
               <h1>My Listings</h1>
-              <p>Manage, edit, mark as sold or delete your product listings.</p>
+              <p>
+                Manage, edit, mark as sold, reactivate or delete your product
+                listings.
+              </p>
             </div>
 
             <a href="/post-product" className="postButton">
@@ -307,7 +318,7 @@ export default function MyListings() {
                     product.image_url ||
                     "https://images.unsplash.com/photo-1607082349566-187342175e2f"
                   }
-                  alt={product.title}
+                  alt={product.title || "Product"}
                   onError={(e) => {
                     e.currentTarget.src =
                       "https://images.unsplash.com/photo-1607082349566-187342175e2f";
@@ -407,7 +418,9 @@ export default function MyListings() {
                             <p>
                               <strong>Paste image here</strong>
                             </p>
-                            <p>Or choose an image from your phone/computer below.</p>
+                            <p>
+                              Or choose an image from your phone/computer below.
+                            </p>
                           </div>
                         )}
                       </div>
@@ -495,7 +508,7 @@ export default function MyListings() {
                               : "statusSold"
                           }
                         >
-                          {product.status}
+                          {product.status || "active"}
                         </span>
                       </div>
 
@@ -579,6 +592,7 @@ export default function MyListings() {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 20px;
         }
 
         .logo {
