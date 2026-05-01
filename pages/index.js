@@ -32,8 +32,9 @@ export default function Home() {
 
     const savedLocation = localStorage.getItem("localdeal_location");
     if (savedLocation) {
-      setBuyerLocation(savedLocation);
-      setLocationInput(savedLocation);
+      const cleaned = cleanLocationText(savedLocation);
+      setBuyerLocation(cleaned);
+      setLocationInput(cleaned);
     }
 
     const { data: listener } = supabase.auth.onAuthStateChange(
@@ -46,6 +47,48 @@ export default function Home() {
       listener.subscription.unsubscribe();
     };
   }, []);
+
+  function cleanLocationText(value) {
+    return String(value || "")
+      .replace(/^near\s+/i, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function normaliseLocation(value) {
+    return cleanLocationText(value).toLowerCase();
+  }
+
+  function getLocationKeywords(value) {
+    const cleaned = normaliseLocation(value);
+
+    if (!cleaned) return [];
+
+    const keywords = [cleaned];
+
+    const westMidlandsAreas = [
+      "birmingham",
+      "walsall",
+      "west bromwich",
+      "wolverhampton",
+      "solihull",
+      "dudley",
+      "sutton coldfield",
+      "sandwell",
+      "coventry",
+      "west midlands"
+    ];
+
+    const isWestMidlands = westMidlandsAreas.some((area) =>
+      cleaned.includes(area)
+    );
+
+    if (isWestMidlands) {
+      keywords.push(...westMidlandsAreas);
+    }
+
+    return [...new Set(keywords)];
+  }
 
   async function checkUser() {
     const { data } = await supabase.auth.getUser();
@@ -88,14 +131,17 @@ export default function Home() {
   }
 
   function saveLocation() {
-    const cleaned = locationInput.trim();
+    const cleaned = cleanLocationText(locationInput);
 
     if (!cleaned) {
-      alert("Please enter your town, city or postcode area.");
+      alert(
+        "Please enter your town, city or postcode area, for example Birmingham, Walsall, B12 or Solihull."
+      );
       return;
     }
 
     setBuyerLocation(cleaned);
+    setLocationInput(cleaned);
     localStorage.setItem("localdeal_location", cleaned);
 
     document.getElementById("products-section")?.scrollIntoView({
@@ -109,9 +155,11 @@ export default function Home() {
     localStorage.removeItem("localdeal_location");
   }
 
-  function useMyLocation() {
+  async function useMyLocation() {
     if (!navigator.geolocation) {
-      alert("Your browser does not support location detection. Please type your town or postcode.");
+      alert(
+        "Your browser does not support location detection. Please type your town or postcode instead."
+      );
       return;
     }
 
@@ -119,27 +167,59 @@ export default function Home() {
 
     navigator.geolocation.getCurrentPosition(
       async (position) => {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
+        try {
+          const lat = position.coords.latitude;
+          const lon = position.coords.longitude;
 
-        // Simple UK-friendly fallback. Browser gives coordinates, but without a maps API
-        // we cannot always convert it perfectly into a town name.
-        // User can still manually change it.
-        const detected = `Near ${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+          const response = await fetch(
+            `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`
+          );
 
-        setBuyerLocation(detected);
-        setLocationInput(detected);
-        localStorage.setItem("localdeal_location", detected);
+          const data = await response.json();
 
-        setDetectingLocation(false);
+          const detectedLocation =
+            data.city ||
+            data.locality ||
+            data.principalSubdivision ||
+            data.countryName ||
+            "";
 
-        document.getElementById("products-section")?.scrollIntoView({
-          behavior: "smooth"
-        });
+          if (!detectedLocation) {
+            alert(
+              "We could not detect your town. Please type your town or postcode manually."
+            );
+            setDetectingLocation(false);
+            return;
+          }
+
+          const cleaned = cleanLocationText(detectedLocation);
+
+          setBuyerLocation(cleaned);
+          setLocationInput(cleaned);
+          localStorage.setItem("localdeal_location", cleaned);
+
+          setDetectingLocation(false);
+
+          document.getElementById("products-section")?.scrollIntoView({
+            behavior: "smooth"
+          });
+        } catch (error) {
+          setDetectingLocation(false);
+          alert(
+            "Could not convert your location into a town. Please type your town or postcode instead."
+          );
+        }
       },
       () => {
         setDetectingLocation(false);
-        alert("Location permission was blocked. Please type your town or postcode instead.");
+        alert(
+          "Location permission was blocked. Please type your town or postcode instead."
+        );
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 10000,
+        maximumAge: 600000
       }
     );
   }
@@ -224,7 +304,6 @@ export default function Home() {
 
   const filteredProducts = products.filter((product) => {
     const searchValue = search.toLowerCase();
-    const locationValue = buyerLocation.toLowerCase();
 
     const matchesSearch =
       search === "" ||
@@ -236,22 +315,31 @@ export default function Home() {
 
     const matchesCategory = category === "All" || product.category === category;
 
+    const sourceWebsite = product.source_website?.toLowerCase() || "";
+    const productLocation = normaliseLocation(product.location);
+
     const isOnlineOrAffiliate =
       product.is_affiliate ||
-      product.location?.toLowerCase() === "online" ||
-      product.source_website?.toLowerCase() !== "localdeal";
+      productLocation === "online" ||
+      sourceWebsite === "amazon" ||
+      sourceWebsite === "ebay" ||
+      sourceWebsite === "awin";
+
+    const buyerLocationKeywords = getLocationKeywords(buyerLocation);
 
     const matchesBuyerLocation =
       !buyerLocation ||
       isOnlineOrAffiliate ||
-      product.location?.toLowerCase().includes(locationValue) ||
-      locationValue.includes(product.location?.toLowerCase());
+      buyerLocationKeywords.some(
+        (keyword) =>
+          productLocation.includes(keyword) || keyword.includes(productLocation)
+      );
 
     return matchesSearch && matchesCategory && matchesBuyerLocation;
   });
 
   const pageTitle = buyerLocation
-    ? `Deals near ${buyerLocation}`
+    ? `Deals near ${cleanLocationText(buyerLocation)}`
     : "Deals near you";
 
   return (
@@ -331,13 +419,13 @@ export default function Home() {
               <h1>{pageTitle}</h1>
 
               <p>
-                Enter your town or postcode area to see local seller listings
-                near you. Online partner deals still appear for everyone.
+                Enter your town or postcode area, or let LocalDeal detect your
+                nearest area. Online partner deals still appear for everyone.
               </p>
 
               <div className="locationBox">
                 <input
-                  placeholder="Enter town, city or postcode area e.g. Birmingham, B12"
+                  placeholder="Enter town or postcode e.g. Birmingham, Walsall, B12"
                   value={locationInput}
                   onChange={(e) => setLocationInput(e.target.value)}
                   className="locationInput"
@@ -352,13 +440,14 @@ export default function Home() {
                   className="detectButton"
                   disabled={detectingLocation}
                 >
-                  {detectingLocation ? "Detecting..." : "Use my location"}
+                  {detectingLocation ? "Finding area..." : "Use my location"}
                 </button>
               </div>
 
               {buyerLocation && (
                 <p className="currentLocation">
-                  Showing local results for <strong>{buyerLocation}</strong>{" "}
+                  Showing local results for{" "}
+                  <strong>{cleanLocationText(buyerLocation)}</strong>{" "}
                   <button onClick={clearLocation}>Change</button>
                 </p>
               )}
@@ -397,8 +486,8 @@ export default function Home() {
               </div>
 
               <p>
-                Sellers choose their listing location. Buyers choose their area
-                to find relevant local listings.
+                Sellers choose their listing location. Buyers choose or detect
+                their area to find relevant local listings.
               </p>
             </div>
           </div>
@@ -418,8 +507,8 @@ export default function Home() {
                 <div className="howIcon">📍</div>
                 <h3>Choose Your Area</h3>
                 <p>
-                  Enter your town or postcode area so LocalDeal can show listings
-                  that are more relevant to you.
+                  Enter your town or postcode area, or use location detection to
+                  find deals near you.
                 </p>
               </div>
 
@@ -823,28 +912,37 @@ export default function Home() {
 
         .locationBox {
           background: white;
-          padding: 12px;
-          border-radius: 14px;
+          padding: 14px;
+          border-radius: 18px;
           display: grid;
           grid-template-columns: 1fr auto auto;
           gap: 10px;
-          box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
           margin-bottom: 16px;
+          border: 1px solid #e5e7eb;
         }
 
         .locationInput {
           width: 100%;
-          padding: 13px;
+          padding: 15px;
           border: 1px solid #d1d5db;
-          border-radius: 10px;
+          border-radius: 12px;
           font-size: 15px;
+          background: #f9fafb;
+        }
+
+        .locationInput:focus {
+          outline: none;
+          border-color: #f4b400;
+          box-shadow: 0 0 0 3px rgba(244, 180, 0, 0.2);
+          background: white;
         }
 
         .locationButton,
         .detectButton {
-          padding: 13px 16px;
+          padding: 15px 18px;
           border: none;
-          border-radius: 10px;
+          border-radius: 12px;
           cursor: pointer;
           font-weight: 800;
           white-space: nowrap;
@@ -855,9 +953,17 @@ export default function Home() {
           color: white;
         }
 
+        .locationButton:hover {
+          background: #030712;
+        }
+
         .detectButton {
           background: #f4b400;
           color: #111827;
+        }
+
+        .detectButton:hover {
+          background: #eab308;
         }
 
         .detectButton:disabled {
