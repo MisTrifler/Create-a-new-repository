@@ -8,11 +8,14 @@ export default function PostProduct() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [location, setLocation] = useState("");
+  const [oldPrice, setOldPrice] = useState("");
+  const [location, setLocation] = useState("Online");
   const [category, setCategory] = useState("General");
   const [imageUrl, setImageUrl] = useState("");
   const [sellerName, setSellerName] = useState("");
-  const [productUrl, setProductUrl] = useState("");
+  const [affiliateUrl, setAffiliateUrl] = useState("");
+  const [sourceWebsite, setSourceWebsite] = useState("LocalDeal");
+  const [isAffiliate, setIsAffiliate] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -48,6 +51,11 @@ export default function PostProduct() {
       return;
     }
 
+    if (affiliateUrl && !affiliateUrl.startsWith("http") && !affiliateUrl.startsWith("mailto:")) {
+      alert("Product link must start with http, https, or mailto.");
+      return;
+    }
+
     setSubmitting(true);
 
     const { error } = await supabase.from("products").insert([
@@ -56,12 +64,15 @@ export default function PostProduct() {
         title,
         description,
         price: Number(price),
+        old_price: oldPrice ? Number(oldPrice) : null,
         location,
         category,
         image_url: imageUrl,
-        seller_name: sellerName,
+        seller_name: sellerName || user.email,
         contact_email: user.email,
-        product_url: productUrl,
+        affiliate_url: affiliateUrl,
+        source_website: sourceWebsite,
+        is_affiliate: isAffiliate,
         status: "active"
       }
     ]);
@@ -79,21 +90,11 @@ export default function PostProduct() {
   }
 
   if (checkingUser) {
-    return (
-      <div style={{ padding: "50px", fontFamily: "Arial" }}>
-        Checking login...
-      </div>
-    );
+    return <div style={{ padding: "50px", fontFamily: "Arial" }}>Checking login...</div>;
   }
 
   return (
-    <div
-      style={{
-        fontFamily: "Arial, sans-serif",
-        minHeight: "100vh",
-        background: "#f8fafc"
-      }}
-    >
+    <div style={{ fontFamily: "Arial, sans-serif", minHeight: "100vh", background: "#f8fafc" }}>
       <div
         style={{
           padding: "20px 40px",
@@ -114,7 +115,7 @@ export default function PostProduct() {
 
       <div
         style={{
-          maxWidth: "620px",
+          maxWidth: "650px",
           margin: "50px auto",
           background: "white",
           padding: "35px",
@@ -122,85 +123,59 @@ export default function PostProduct() {
           boxShadow: "0 6px 18px rgba(0,0,0,0.08)"
         }}
       >
-        <h1>Post a Product for Sale</h1>
+        <h1>Post Product or Affiliate Deal</h1>
         <p style={{ color: "#555" }}>
-          Add your product details below. Buyers will be able to contact you by
-          email.
+          Add a local product, service, or affiliate partner product.
         </p>
 
         <label>Product title *</label>
-        <input
-          placeholder="Example: iPhone 13 for sale"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          style={inputStyle}
-        />
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Example: Wireless Headphones" style={inputStyle} />
 
         <label>Description</label>
-        <textarea
-          placeholder="Describe the product condition, details and reason for selling"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          style={{ ...inputStyle, minHeight: "100px" }}
-        />
+        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the product" style={{ ...inputStyle, minHeight: "100px" }} />
 
         <label>Price *</label>
-        <input
-          placeholder="Example: 250"
-          type="number"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          style={inputStyle}
-        />
+        <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Example: 39.99" style={inputStyle} />
+
+        <label>Old price optional</label>
+        <input type="number" value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} placeholder="Example: 59.99" style={inputStyle} />
 
         <label>Location *</label>
-        <input
-          placeholder="Example: Yeovil"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          style={inputStyle}
-        />
+        <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Online, Yeovil, London..." style={inputStyle} />
 
         <label>Category</label>
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          style={inputStyle}
-        >
+        <select value={category} onChange={(e) => setCategory(e.target.value)} style={inputStyle}>
           <option>General</option>
           <option>Electronics</option>
-          <option>Cars</option>
+          <option>Phones</option>
           <option>Home</option>
-          <option>Clothes</option>
-          <option>Food</option>
-          <option>Services</option>
+          <option>Fashion</option>
+          <option>Cars</option>
           <option>Beauty</option>
           <option>Fitness</option>
+          <option>Services</option>
         </select>
 
         <label>Image URL</label>
-        <input
-          placeholder="Paste an image link"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          style={inputStyle}
-        />
+        <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Paste an image link" style={inputStyle} />
 
-        <label>Your name / business name</label>
-        <input
-          placeholder="Example: Vidyut or Local Phone Shop"
-          value={sellerName}
-          onChange={(e) => setSellerName(e.target.value)}
-          style={inputStyle}
-        />
+        <label>Seller / store name</label>
+        <input value={sellerName} onChange={(e) => setSellerName(e.target.value)} placeholder="Example: Amazon, eBay, Local Seller" style={inputStyle} />
 
-        <label>Product link optional</label>
-        <input
-          placeholder="Optional website / WhatsApp / product link"
-          value={productUrl}
-          onChange={(e) => setProductUrl(e.target.value)}
-          style={inputStyle}
-        />
+        <label>Source website</label>
+        <input value={sourceWebsite} onChange={(e) => setSourceWebsite(e.target.value)} placeholder="Amazon, eBay, Awin, Local Seller" style={inputStyle} />
+
+        <label>Product / affiliate link</label>
+        <input value={affiliateUrl} onChange={(e) => setAffiliateUrl(e.target.value)} placeholder="Paste your affiliate link or product link" style={inputStyle} />
+
+        <label style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "18px" }}>
+          <input
+            type="checkbox"
+            checked={isAffiliate}
+            onChange={(e) => setIsAffiliate(e.target.checked)}
+          />
+          This is an affiliate / commission link
+        </label>
 
         <button
           onClick={submitProduct}
@@ -214,8 +189,7 @@ export default function PostProduct() {
             borderRadius: "10px",
             cursor: submitting ? "not-allowed" : "pointer",
             fontWeight: "bold",
-            fontSize: "16px",
-            marginTop: "15px"
+            fontSize: "16px"
           }}
         >
           {submitting ? "Posting..." : "Post Product"}
