@@ -677,8 +677,10 @@ export default function Home() {
 
           <div className="grid">
             {filteredProducts.map((product) => {
+              const isAffiliate = Boolean(product.is_affiliate);
+
               const discount =
-                product.old_price && product.price
+                !isAffiliate && product.old_price && product.price
                   ? Math.round(
                       ((product.old_price - product.price) / product.old_price) *
                         100
@@ -718,8 +720,12 @@ export default function Home() {
                       <span className="badge">Bumped</span>
                     )}
 
-                    {!isBoosted && product.is_affiliate && (
+                    {!isBoosted && isAffiliate && (
                       <span className="partnerBadge">Partner</span>
+                    )}
+
+                    {isAffiliate && (
+                      <span className="imageNote">Illustration</span>
                     )}
                   </div>
 
@@ -733,21 +739,41 @@ export default function Home() {
 
                     <p className="description">{product.description}</p>
 
-                    <div className="priceLine">
-                      <span className="price">£{product.price}</span>
+                    {isAffiliate ? (
+                      <div className="partnerPriceBox">
+                        <p className="checkPrice">Check latest price</p>
+                        <p className="priceNote">
+                          Price, image and availability may change on Amazon.
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="priceLine">
+                          <span className="price">£{product.price}</span>
 
-                      {product.old_price && (
-                        <span className="oldPrice">£{product.old_price}</span>
-                      )}
-                    </div>
+                          {product.old_price && (
+                            <span className="oldPrice">
+                              £{product.old_price}
+                            </span>
+                          )}
+                        </div>
 
-                    {discount !== null && (
-                      <p className="discount">{discount}% OFF</p>
+                        {discount !== null && (
+                          <p className="discount">{discount}% OFF</p>
+                        )}
+                      </>
                     )}
 
                     <p className="location">📍 {product.location || "Online"}</p>
 
-                    {!product.is_affiliate && (
+                    {isAffiliate && (
+                      <p className="affiliateWarning">
+                        Partner deal. Image may be for illustration. Check exact
+                        product details on Amazon before buying.
+                      </p>
+                    )}
+
+                    {!isAffiliate && (
                       <div className="sellerTrustBox">
                         <p className="sellerName">
                           Seller: {product.seller_name || "Local Seller"}
@@ -781,12 +807,10 @@ export default function Home() {
                       onClick={() => openProduct(product)}
                       className="darkButton"
                     >
-                      {product.is_affiliate
-                        ? "View Partner Deal"
-                        : "Message Seller"}
+                      {isAffiliate ? "View Partner Deal" : "Message Seller"}
                     </button>
 
-                    {!product.is_affiliate && (
+                    {!isAffiliate && (
                       <>
                         <button
                           onClick={() => startBoost(product.id, "bump_24h")}
@@ -1282,10 +1306,9 @@ export default function Home() {
         }
 
         .badge,
-        .partnerBadge {
+        .partnerBadge,
+        .imageNote {
           position: absolute;
-          top: 10px;
-          left: 10px;
           padding: 5px 8px;
           border-radius: 999px;
           font-size: 12px;
@@ -1293,13 +1316,24 @@ export default function Home() {
         }
 
         .badge {
+          top: 10px;
+          left: 10px;
           background: #f4b400;
           color: #111827;
         }
 
         .partnerBadge {
+          top: 10px;
+          left: 10px;
           background: #111827;
           color: white;
+        }
+
+        .imageNote {
+          right: 10px;
+          bottom: 10px;
+          background: rgba(255, 255, 255, 0.92);
+          color: #111827;
         }
 
         .cardBody {
@@ -1347,9 +1381,42 @@ export default function Home() {
           margin: 0 0 12px;
         }
 
+        .partnerPriceBox {
+          margin: 12px 0;
+          background: #fffbeb;
+          border: 1px solid #fde68a;
+          padding: 12px;
+          border-radius: 10px;
+        }
+
+        .checkPrice {
+          font-size: 18px;
+          font-weight: 900;
+          color: #111827;
+          margin: 0 0 5px;
+        }
+
+        .priceNote {
+          color: #92400e;
+          font-size: 13px;
+          margin: 0;
+          line-height: 1.4;
+        }
+
         .location {
           font-size: 13px;
           color: #6b7280;
+        }
+
+        .affiliateWarning {
+          background: #f9fafb;
+          border: 1px solid #e5e7eb;
+          padding: 10px;
+          border-radius: 10px;
+          color: #555;
+          font-size: 12px;
+          line-height: 1.45;
+          margin: 10px 0;
         }
 
         .sellerTrustBox {
