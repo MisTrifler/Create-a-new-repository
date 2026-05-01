@@ -15,16 +15,31 @@ export default function PrivacyPolicy() {
 
         <h2>Information we collect</h2>
         <p>
-          When you create an account, post a listing or contact us, we may
-          collect information such as your email address, product details,
-          listing information and messages you send to us.
+          When you create an account, post a listing, leave a review or contact
+          us, we may collect information such as your email address, product
+          details, listing information, review content and messages you send to
+          us.
         </p>
 
         <h2>How we use information</h2>
         <p>
           We use information to operate LocalDeal, show listings, allow users to
-          login, help sellers post products, respond to support requests and
-          improve the website.
+          login, help sellers post products, display reviews, respond to support
+          requests and improve the website.
+        </p>
+
+        <h2>Product listings</h2>
+        <p>
+          Product listings may include seller names, general locations, product
+          descriptions, prices and images. Sellers should not post private
+          addresses or sensitive personal information in listings.
+        </p>
+
+        <h2>Reviews</h2>
+        <p>
+          Users may leave reviews about sellers. Reviews are intended to help
+          buyers and sellers understand who may be genuine and reliable. Reviews
+          should be honest, fair and not abusive.
         </p>
 
         <h2>Affiliate links</h2>
@@ -51,14 +66,15 @@ export default function PrivacyPolicy() {
         <p>
           LocalDeal may link to third-party websites such as retailers, local
           sellers or partner platforms. We are not responsible for the privacy
-          practices or content of those websites.
+          practices, content, prices, delivery, refunds or terms of those
+          websites.
         </p>
 
         <h2>Contact</h2>
         <p>
           For privacy questions, contact us at{" "}
-          <a href="mailto:support@localdeal.co.uk">
-            support@localdeal.co.uk
+          <a href="mailto:viddchoudhary@hotmail.com">
+            viddchoudhary@hotmail.com
           </a>.
         </p>
       </main>
@@ -71,12 +87,23 @@ export default function PrivacyPolicy() {
 function Header() {
   return (
     <div style={headerStyle}>
-      <a href="/" style={logoStyle}>LocalDeal</a>
+      <a href="/" style={logoStyle}>
+        LocalDeal
+      </a>
+
       <nav>
-        <a href="/about" style={linkStyle}>About</a>
-        <a href="/contact" style={linkStyle}>Contact</a>
-        <a href="/privacy-policy" style={linkStyle}>Privacy</a>
-        <a href="/terms" style={linkStyle}>Terms</a>
+        <a href="/about" style={linkStyle}>
+          About
+        </a>
+        <a href="/contact" style={linkStyle}>
+          Contact
+        </a>
+        <a href="/privacy-policy" style={linkStyle}>
+          Privacy
+        </a>
+        <a href="/terms" style={linkStyle}>
+          Terms
+        </a>
       </nav>
     </div>
   );
