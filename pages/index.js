@@ -19,8 +19,9 @@ export default function Home() {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error(error);
-      alert(error.message);
+      console.error("Supabase error:", error);
+      alert("Supabase error: " + error.message);
+      setDeals([]);
     } else {
       setDeals(data || []);
     }
@@ -34,7 +35,8 @@ export default function Home() {
     return (
       postcode === "" ||
       deal.location?.toLowerCase().includes(search) ||
-      deal.title?.toLowerCase().includes(search)
+      deal.title?.toLowerCase().includes(search) ||
+      deal.business_name?.toLowerCase().includes(search)
     );
   });
 
@@ -67,13 +69,21 @@ export default function Home() {
             style={{
               marginRight: "20px",
               textDecoration: "none",
-              color: "#111"
+              color: "#111",
+              fontWeight: "500"
             }}
           >
             Post Deal
           </a>
 
-          <a href="/login" style={{ textDecoration: "none", color: "#111" }}>
+          <a
+            href="/login"
+            style={{
+              textDecoration: "none",
+              color: "#111",
+              fontWeight: "500"
+            }}
+          >
             Login
           </a>
         </div>
@@ -83,15 +93,27 @@ export default function Home() {
       <div
         style={{
           textAlign: "center",
-          padding: "70px 20px",
+          padding: "80px 20px",
           background: "white"
         }}
       >
-        <h1 style={{ fontSize: "46px", marginBottom: "10px" }}>
+        <h1
+          style={{
+            fontSize: "52px",
+            marginBottom: "15px",
+            lineHeight: "1.1"
+          }}
+        >
           Find the Best Local Deals Near You
         </h1>
 
-        <p style={{ color: "#555", fontSize: "18px", marginBottom: "25px" }}>
+        <p
+          style={{
+            color: "#555",
+            fontSize: "18px",
+            marginBottom: "30px"
+          }}
+        >
           Save money on food, gyms, car washes, beauty, services and more.
         </p>
 
@@ -100,22 +122,24 @@ export default function Home() {
           value={postcode}
           onChange={(e) => setPostcode(e.target.value)}
           style={{
-            padding: "14px",
-            width: "260px",
-            borderRadius: "8px",
+            padding: "15px",
+            width: "280px",
+            borderRadius: "10px",
             border: "1px solid #ccc",
-            marginRight: "10px"
+            marginRight: "10px",
+            fontSize: "15px"
           }}
         />
 
         <button
           style={{
-            padding: "14px 24px",
+            padding: "15px 26px",
             background: "#f4b400",
             border: "none",
-            borderRadius: "8px",
+            borderRadius: "10px",
             cursor: "pointer",
-            fontWeight: "bold"
+            fontWeight: "bold",
+            fontSize: "15px"
           }}
         >
           Search Deals
@@ -123,8 +147,10 @@ export default function Home() {
       </div>
 
       {/* DEALS */}
-      <div style={{ padding: "50px 40px" }}>
-        <h2 style={{ marginBottom: "25px" }}>🔥 Deals Near You</h2>
+      <div style={{ padding: "55px 45px" }}>
+        <h2 style={{ marginBottom: "25px", fontSize: "28px" }}>
+          🔥 Deals Near You
+        </h2>
 
         {loading && <p>Loading deals...</p>}
 
@@ -135,7 +161,7 @@ export default function Home() {
         <div
           style={{
             display: "flex",
-            gap: "25px",
+            gap: "28px",
             flexWrap: "wrap"
           }}
         >
@@ -151,12 +177,12 @@ export default function Home() {
               <div
                 key={deal.id}
                 style={{
-                  width: "280px",
+                  width: "285px",
                   background: "white",
-                  borderRadius: "14px",
+                  borderRadius: "16px",
                   overflow: "hidden",
                   border: "1px solid #e5e7eb",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.06)"
+                  boxShadow: "0 6px 18px rgba(0,0,0,0.08)"
                 }}
               >
                 <img
@@ -164,10 +190,14 @@ export default function Home() {
                     deal.image_url ||
                     "https://images.unsplash.com/photo-1607082349566-187342175e2f"
                   }
-                  alt={deal.title}
+                  alt={deal.title || "Local deal"}
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://images.unsplash.com/photo-1607082349566-187342175e2f";
+                  }}
                   style={{
                     width: "100%",
-                    height: "170px",
+                    height: "180px",
                     objectFit: "cover"
                   }}
                 />
@@ -177,45 +207,67 @@ export default function Home() {
                     style={{
                       color: "#666",
                       fontSize: "14px",
-                      margin: "0 0 6px"
+                      margin: "0 0 8px"
                     }}
                   >
-                    {deal.business_name || "Local Business"} · {deal.location}
+                    {deal.business_name || "Local Business"} ·{" "}
+                    {deal.location || "Local Area"}
                   </p>
 
-                  <h3 style={{ margin: "0 0 10px" }}>{deal.title}</h3>
+                  <h3 style={{ margin: "0 0 12px", fontSize: "20px" }}>
+                    {deal.title}
+                  </h3>
 
                   {deal.description && (
-                    <p style={{ color: "#555", fontSize: "14px" }}>
+                    <p
+                      style={{
+                        color: "#555",
+                        fontSize: "14px",
+                        minHeight: "38px"
+                      }}
+                    >
                       {deal.description}
                     </p>
                   )}
 
-                  <p style={{ fontSize: "18px" }}>
+                  <p style={{ fontSize: "18px", marginBottom: "8px" }}>
                     {deal.old_price && <s>£{deal.old_price}</s>}{" "}
                     <b>£{deal.price}</b>
                   </p>
 
                   {discount !== null && (
-                    <p style={{ color: "green", fontWeight: "bold" }}>
+                    <p
+                      style={{
+                        color: "green",
+                        fontWeight: "bold",
+                        marginBottom: "14px"
+                      }}
+                    >
                       {discount}% OFF
                     </p>
                   )}
 
-                  <button
-                    style={{
-                      marginTop: "10px",
-                      width: "100%",
-                      padding: "12px",
-                      background: "#111827",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "8px",
-                      cursor: "pointer"
-                    }}
+                  <a
+                    href={deal.deal_url || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ textDecoration: "none" }}
                   >
-                    View Deal
-                  </button>
+                    <button
+                      style={{
+                        width: "100%",
+                        padding: "13px",
+                        background: "#111827",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "10px",
+                        cursor: "pointer",
+                        fontWeight: "bold"
+                      }}
+                    >
+                      View Deal
+                    </button>
+                  </a>
                 </div>
               </div>
             );
@@ -224,7 +276,13 @@ export default function Home() {
       </div>
 
       {/* FOOTER */}
-      <div style={{ textAlign: "center", padding: "40px", color: "#666" }}>
+      <div
+        style={{
+          textAlign: "center",
+          padding: "45px",
+          color: "#666"
+        }}
+      >
         <p>🔥 New local deals added daily</p>
         <p>📍 Built for local businesses and local customers</p>
       </div>
