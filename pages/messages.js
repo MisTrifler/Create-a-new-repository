@@ -11,6 +11,10 @@ export default function Messages() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
 
+  const [profilesMap, setProfilesMap] = useState({});
+  const [myDisplayName, setMyDisplayName] = useState("");
+  const [savingName, setSavingName] = useState(false);
+
   useEffect(() => {
     init();
   }, []);
@@ -39,6 +43,8 @@ export default function Messages() {
     setUser(data.user);
     setCheckingUser(false);
 
+    await fetchMyProfile(data.user);
+
     const params = new URLSearchParams(window.location.search);
     const productId = params.get("productId");
 
@@ -47,6 +53,114 @@ export default function Messages() {
     }
 
     await fetchConversations(data.user.id);
+  }
+
+  async function fetchMyProfile(currentUser) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", currentUser.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Profile load error:", error);
+      return;
+    }
+
+    if (data?.display_name) {
+      setMyDisplayName(data.display_name);
+      setProfilesMap((old) => ({
+        ...old,
+        [currentUser.id]: data
+      }));
+    } else {
+      const fallbackName =
+        currentUser.email?.split("@")[0]?.replace(/[._-]/g, " ") || "LocalDeal User";
+
+      setMyDisplayName(fallbackName);
+
+      setProfilesMap((old) => ({
+        ...old,
+        [currentUser.id]: {
+          id: currentUser.id,
+          display_name: fallbackName
+        }
+      }));
+    }
+  }
+
+  async function saveMyDisplayName() {
+    const cleaned = myDisplayName.trim();
+
+    if (!cleaned) {
+      alert("Please enter a display name.");
+      return;
+    }
+
+    if (cleaned.length > 40) {
+      alert("Display name must be under 40 characters.");
+      return;
+    }
+
+    setSavingName(true);
+
+    const { error } = await supabase.from("profiles").upsert({
+      id: user.id,
+      display_name: cleaned,
+      updated_at: new Date().toISOString()
+    });
+
+    setSavingName(false);
+
+    if (error) {
+      alert("Could not save display name: " + error.message);
+      return;
+    }
+
+    setProfilesMap((old) => ({
+      ...old,
+      [user.id]: {
+        ...(old[user.id] || {}),
+        id: user.id,
+        display_name: cleaned
+      }
+    }));
+
+    alert("Display name saved.");
+  }
+
+  async function fetchProfilesForConversations(conversationRows) {
+    const ids = [];
+
+    conversationRows.forEach((conversation) => {
+      if (conversation.buyer_id) ids.push(conversation.buyer_id);
+      if (conversation.seller_id) ids.push(conversation.seller_id);
+    });
+
+    const uniqueIds = [...new Set(ids)];
+
+    if (uniqueIds.length === 0) return;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .in("id", uniqueIds);
+
+    if (error) {
+      console.error("Profiles load error:", error);
+      return;
+    }
+
+    const map = {};
+
+    (data || []).forEach((profile) => {
+      map[profile.id] = profile;
+    });
+
+    setProfilesMap((old) => ({
+      ...old,
+      ...map
+    }));
   }
 
   async function startConversation(currentUser, productId) {
@@ -92,6 +206,7 @@ export default function Messages() {
       };
 
       setActiveConversation(fullConversation);
+      await fetchProfilesForConversations([fullConversation]);
       return;
     }
 
@@ -118,6 +233,7 @@ export default function Messages() {
     };
 
     setActiveConversation(fullConversation);
+    await fetchProfilesForConversations([fullConversation]);
   }
 
   async function fetchConversations(userId) {
@@ -146,10 +262,13 @@ export default function Messages() {
       return;
     }
 
-    setConversations(data || []);
+    const rows = data || [];
 
-    if (!activeConversation && data && data.length > 0) {
-      setActiveConversation(data[0]);
+    setConversations(rows);
+    await fetchProfilesForConversations(rows);
+
+    if (!activeConversation && rows.length > 0) {
+      setActiveConversation(rows[0]);
     }
   }
 
@@ -211,14 +330,65 @@ export default function Messages() {
     await fetchConversations(user.id);
   }
 
+  function formatName(name) {
+    if (!name) return "";
+    return name
+      .trim()
+      .replace(/\s+/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+
+  function getProfileName(userId) {
+    const profile = profilesMap[userId];
+
+    if (profile?.display_name) {
+      return formatName(profile.display_name);
+    }
+
+    return "";
+  }
+
+  function getOtherUserId(conversation) {
+    if (!conversation || !user) return null;
+
+    if (conversation.buyer_id === user.id) {
+      return conversation.seller_id;
+    }
+
+    return conversation.buyer_id;
+  }
+
   function getOtherPersonLabel(conversation) {
     if (!conversation || !user) return "Conversation";
 
-    if (conversation.seller_id === user.id) {
-      return "Buyer";
+    const otherUserId = getOtherUserId(conversation);
+    const profileName = getProfileName(otherUserId);
+
+    if (profileName) {
+      return profileName;
     }
 
-    return conversation.products?.seller_name || "Seller";
+    if (conversation.buyer_id === user.id) {
+      return conversation.products?.seller_name || "Seller";
+    }
+
+    return "Buyer";
+  }
+
+  function getMessageSenderName(message) {
+    if (!message || !user) return "";
+
+    if (message.sender_id === user.id) {
+      return "You";
+    }
+
+    const profileName = getProfileName(message.sender_id);
+
+    if (profileName) {
+      return profileName;
+    }
+
+    return getOtherPersonLabel(activeConversation);
   }
 
   if (checkingUser) {
@@ -254,9 +424,29 @@ export default function Messages() {
           <div className="topText">
             <h1>Messages</h1>
             <p>
-              Chat safely inside LocalDeal. Do not share passwords, bank details,
-              full addresses, phone numbers or personal information.
+              Chat safely inside LocalDeal. Use your display name so buyers and
+              sellers know who they are speaking to. Do not share passwords, bank
+              details, full addresses, phone numbers or personal information.
             </p>
+          </div>
+
+          <div className="profileBox">
+            <div>
+              <h2>Your public chat name</h2>
+              <p>This is shown in chats instead of your email address.</p>
+            </div>
+
+            <div className="profileForm">
+              <input
+                value={myDisplayName}
+                onChange={(e) => setMyDisplayName(e.target.value)}
+                placeholder="Example: Vidyut, Sarah, Laptop Seller"
+                maxLength={40}
+              />
+              <button onClick={saveMyDisplayName} disabled={savingName}>
+                {savingName ? "Saving..." : "Save Name"}
+              </button>
+            </div>
           </div>
 
           <div className="chatLayout">
@@ -326,7 +516,8 @@ export default function Messages() {
                     <div>
                       <h2>{activeConversation.products?.title || "Product"}</h2>
                       <p>
-                        Chatting with {getOtherPersonLabel(activeConversation)}
+                        Chatting with{" "}
+                        <strong>{getOtherPersonLabel(activeConversation)}</strong>
                       </p>
                     </div>
                   </div>
@@ -353,6 +544,9 @@ export default function Messages() {
                           key={message.id}
                           className={mine ? "message mine" : "message theirs"}
                         >
+                          <strong className="senderName">
+                            {getMessageSenderName(message)}
+                          </strong>
                           <p>{message.body}</p>
                           <small>
                             {new Date(message.created_at).toLocaleString()}
@@ -432,6 +626,58 @@ export default function Messages() {
         .topText p {
           color: #555;
           line-height: 1.6;
+        }
+
+        .profileBox {
+          background: white;
+          border: 1px solid #e5e7eb;
+          border-radius: 16px;
+          padding: 18px;
+          display: grid;
+          grid-template-columns: 1fr 1.4fr;
+          gap: 18px;
+          align-items: center;
+          margin-bottom: 22px;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+        }
+
+        .profileBox h2 {
+          margin: 0 0 6px;
+        }
+
+        .profileBox p {
+          color: #6b7280;
+          margin: 0;
+        }
+
+        .profileForm {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 10px;
+        }
+
+        .profileForm input {
+          width: 100%;
+          padding: 13px;
+          border: 1px solid #d1d5db;
+          border-radius: 10px;
+          font-size: 15px;
+        }
+
+        .profileForm button {
+          background: #111827;
+          color: white;
+          border: none;
+          border-radius: 10px;
+          padding: 12px 16px;
+          font-weight: 800;
+          cursor: pointer;
+          white-space: nowrap;
+        }
+
+        .profileForm button:disabled {
+          background: #777;
+          cursor: not-allowed;
         }
 
         .chatLayout {
@@ -552,6 +798,13 @@ export default function Messages() {
           border-radius: 14px;
         }
 
+        .senderName {
+          display: block;
+          font-size: 13px;
+          margin-bottom: 6px;
+          opacity: 0.85;
+        }
+
         .message p {
           margin: 0 0 6px;
           line-height: 1.4;
@@ -636,6 +889,18 @@ export default function Messages() {
 
           .container {
             padding: 24px 14px;
+          }
+
+          .profileBox {
+            grid-template-columns: 1fr;
+          }
+
+          .profileForm {
+            grid-template-columns: 1fr;
+          }
+
+          .profileForm button {
+            width: 100%;
           }
 
           .chatLayout {
