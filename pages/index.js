@@ -47,6 +47,8 @@ export default function Home() {
       .from("products")
       .select("*")
       .eq("status", "active")
+      .order("is_featured", { ascending: false })
+      .order("bumped_until", { ascending: false })
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -170,7 +172,7 @@ export default function Home() {
               fontWeight: "500"
             }}
           >
-            Sell
+            Post Free
           </a>
 
           {user ? (
@@ -277,7 +279,7 @@ export default function Home() {
                 marginBottom: "18px"
               }}
             >
-              Shop local deals and partner products in one place
+              Post products for free. Boost only when you want more views.
             </h1>
 
             <p
@@ -287,13 +289,14 @@ export default function Home() {
                 marginBottom: "24px"
               }}
             >
-              Discover products from local sellers and trusted partner websites.
-              Some links may earn LocalDeal a commission.
+              LocalDeal helps UK buyers find local listings and partner deals.
+              Basic posting is free. Sellers can later pay to bump or feature
+              products.
             </p>
 
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
               <a
-                href="#products-section"
+                href="/post-product"
                 style={{
                   background: "#111827",
                   color: "white",
@@ -303,11 +306,11 @@ export default function Home() {
                   fontWeight: "700"
                 }}
               >
-                Browse Products
+                Post Free Listing
               </a>
 
               <a
-                href="/post-product"
+                href="#products-section"
                 style={{
                   background: "white",
                   color: "#111827",
@@ -318,7 +321,7 @@ export default function Home() {
                   border: "1px solid #d1d5db"
                 }}
               >
-                Sell Your Product
+                Browse Products
               </a>
             </div>
           </div>
@@ -331,17 +334,27 @@ export default function Home() {
               boxShadow: "0 10px 30px rgba(0,0,0,0.1)"
             }}
           >
-            <h3 style={{ marginTop: 0 }}>How commissions work</h3>
-            <p style={{ color: "#555" }}>
-              Join affiliate programmes, paste your tracked affiliate links into
-              products, and earn when buyers purchase through your links.
+            <h3 style={{ marginTop: 0 }}>Seller pricing</h3>
+
+            <div style={priceBox}>
+              <strong>Free Listing</strong>
+              <span>£0</span>
+            </div>
+
+            <div style={priceBox}>
+              <strong>Bump to top</strong>
+              <span>Coming soon</span>
+            </div>
+
+            <div style={priceBox}>
+              <strong>Featured placement</strong>
+              <span>Coming soon</span>
+            </div>
+
+            <p style={{ color: "#555", marginBottom: 0 }}>
+              Affiliate disclosure: some outbound links may earn LocalDeal a
+              commission at no extra cost to the buyer.
             </p>
-            <ul style={{ color: "#555", lineHeight: "1.8" }}>
-              <li>Amazon Associates links</li>
-              <li>eBay Partner Network links</li>
-              <li>Awin partner brand links</li>
-              <li>Local sellers can post their own items</li>
-            </ul>
           </div>
         </div>
       </div>
@@ -377,13 +390,13 @@ export default function Home() {
                 fontWeight: "700"
               }}
             >
-              Post Product
+              Post Free Product
             </a>
           </div>
 
           <p style={{ color: "#666", marginBottom: "25px" }}>
-            Affiliate disclosure: some outbound links may earn LocalDeal a
-            commission at no extra cost to the buyer.
+            Basic listings are free. Featured and bumped products appear higher.
+            Some partner links may earn commission.
           </p>
 
           {loading && <p>Loading products...</p>}
@@ -409,6 +422,11 @@ export default function Home() {
                     )
                   : null;
 
+              const isBoosted =
+                product.is_featured ||
+                (product.bumped_until &&
+                  new Date(product.bumped_until) > new Date());
+
               return (
                 <div
                   key={product.id}
@@ -416,8 +434,12 @@ export default function Home() {
                     background: "white",
                     borderRadius: "14px",
                     overflow: "hidden",
-                    border: "1px solid #e5e7eb",
-                    boxShadow: "0 4px 14px rgba(0,0,0,0.08)"
+                    border: isBoosted
+                      ? "2px solid #f4b400"
+                      : "1px solid #e5e7eb",
+                    boxShadow: isBoosted
+                      ? "0 8px 22px rgba(244,180,0,0.25)"
+                      : "0 4px 14px rgba(0,0,0,0.08)"
                   }}
                 >
                   <div style={{ position: "relative" }}>
@@ -438,7 +460,7 @@ export default function Home() {
                       }}
                     />
 
-                    {product.is_affiliate && (
+                    {isBoosted && (
                       <span
                         style={{
                           position: "absolute",
@@ -446,6 +468,24 @@ export default function Home() {
                           left: "10px",
                           background: "#f4b400",
                           color: "#111827",
+                          padding: "5px 8px",
+                          borderRadius: "999px",
+                          fontSize: "12px",
+                          fontWeight: "700"
+                        }}
+                      >
+                        Featured
+                      </span>
+                    )}
+
+                    {!isBoosted && product.is_affiliate && (
+                      <span
+                        style={{
+                          position: "absolute",
+                          top: "10px",
+                          left: "10px",
+                          background: "#111827",
+                          color: "white",
                           padding: "5px 8px",
                           borderRadius: "999px",
                           fontSize: "12px",
@@ -548,6 +588,29 @@ export default function Home() {
                         ? "View Partner Deal"
                         : "Contact Seller"}
                     </button>
+
+                    {!isBoosted && !product.is_affiliate && (
+                      <button
+                        onClick={() =>
+                          alert(
+                            "Boost payments are coming soon. For now, contact LocalDeal to feature this listing."
+                          )
+                        }
+                        style={{
+                          width: "100%",
+                          padding: "10px",
+                          background: "white",
+                          color: "#111827",
+                          border: "1px solid #d1d5db",
+                          borderRadius: "9px",
+                          cursor: "pointer",
+                          fontWeight: "700",
+                          marginTop: "8px"
+                        }}
+                      >
+                        Boost Listing
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -566,10 +629,18 @@ export default function Home() {
         }}
       >
         <p style={{ margin: 0 }}>
-          LocalDeal may earn commission from partner links. Local seller listings
-          are posted by users.
+          LocalDeal is free to use for basic listings. Partner links may earn
+          commission. Featured listing payments coming soon.
         </p>
       </div>
     </div>
   );
 }
+
+const priceBox = {
+  display: "flex",
+  justifyContent: "space-between",
+  padding: "12px 0",
+  borderBottom: "1px solid #e5e7eb",
+  color: "#111827"
+};
