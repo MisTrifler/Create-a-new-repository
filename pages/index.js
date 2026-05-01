@@ -135,8 +135,7 @@ export default function Home() {
       product.category?.toLowerCase().includes(value) ||
       product.source_website?.toLowerCase().includes(value);
 
-    const matchesCategory =
-      category === "All" || product.category === category;
+    const matchesCategory = category === "All" || product.category === category;
 
     return matchesSearch && matchesCategory;
   });
@@ -388,7 +387,7 @@ export default function Home() {
               <span>£4.99 / 7 days</span>
             </div>
 
-            <p style={{ color: "#555", marginBottom: 0 }}>
+            <p style={{ color: "#555", marginBottom: 0, marginTop: "14px" }}>
               Affiliate disclosure: some outbound links may earn LocalDeal a
               commission at no extra cost to the buyer.
             </p>
@@ -463,11 +462,8 @@ export default function Home() {
                 product.bumped_until &&
                 new Date(product.bumped_until) > new Date();
 
-              const isFeatured =
-                product.is_featured && isCurrentlyBoosted;
-
-              const isBoosted =
-                isFeatured || isCurrentlyBoosted;
+              const isFeatured = product.is_featured && isCurrentlyBoosted;
+              const isBoosted = isFeatured || isCurrentlyBoosted;
 
               return (
                 <div
@@ -675,9 +671,7 @@ export default function Home() {
                         </button>
 
                         <button
-                          onClick={() =>
-                            startBoost(product.id, "featured_7d")
-                          }
+                          onClick={() => startBoost(product.id, "featured_7d")}
                           disabled={boostingProductId === product.id}
                           style={{
                             width: "100%",
