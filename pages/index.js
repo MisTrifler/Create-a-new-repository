@@ -112,7 +112,13 @@ export default function Home() {
         "barking",
         "waltham forest"
       ],
-      leeds: ["leeds", "west yorkshire", "bradford", "wakefield", "huddersfield"],
+      leeds: [
+        "leeds",
+        "west yorkshire",
+        "bradford",
+        "wakefield",
+        "huddersfield"
+      ],
       glasgow: ["glasgow", "glasgow city", "paisley", "east kilbride"],
       cardiff: ["cardiff", "newport", "caerphilly", "vale of glamorgan"]
     };
@@ -280,17 +286,18 @@ export default function Home() {
       return;
     }
 
-    if (product.affiliate_url && product.affiliate_url.startsWith("mailto:")) {
-      window.location.href = product.affiliate_url;
+    if (product.is_affiliate) {
+      alert("No valid partner link found for this product.");
       return;
     }
 
-    if (product.contact_email) {
-      window.location.href = `mailto:${product.contact_email}?subject=Interested in ${product.title}`;
+    if (!user) {
+      alert("Please login to message this seller.");
+      window.location.href = "/login";
       return;
     }
 
-    alert("No valid link found for this product.");
+    window.location.href = `/messages?productId=${product.id}`;
   }
 
   async function startBoost(productId, boostType) {
@@ -429,6 +436,10 @@ export default function Home() {
               My Listings
             </a>
 
+            <a href="/messages" className="navLink">
+              Messages
+            </a>
+
             {user ? (
               <>
                 <span className="email">{user.email}</span>
@@ -533,6 +544,10 @@ export default function Home() {
                   Manage My Listings
                 </a>
 
+                <a href="/messages" className="secondaryButton">
+                  Messages
+                </a>
+
                 <a href="#products-section" className="secondaryButton">
                   Browse Products
                 </a>
@@ -558,8 +573,8 @@ export default function Home() {
               </div>
 
               <p>
-                Sellers choose their listing location. Buyers choose or detect
-                their area to find relevant local listings.
+                Sellers choose their listing location. Buyers can message sellers
+                safely inside LocalDeal without sharing personal contact details.
               </p>
             </div>
           </div>
@@ -594,11 +609,11 @@ export default function Home() {
               </div>
 
               <div className="howCard">
-                <div className="howIcon">📩</div>
-                <h3>Contact or Buy</h3>
+                <div className="howIcon">💬</div>
+                <h3>Message Safely</h3>
                 <p>
-                  Contact local sellers directly or visit trusted partner websites
-                  through product links.
+                  Buyers and sellers can chat inside LocalDeal without displaying
+                  phone numbers or email addresses publicly.
                 </p>
               </div>
 
@@ -768,7 +783,7 @@ export default function Home() {
                     >
                       {product.is_affiliate
                         ? "View Partner Deal"
-                        : "Contact Seller"}
+                        : "Message Seller"}
                     </button>
 
                     {!product.is_affiliate && (
