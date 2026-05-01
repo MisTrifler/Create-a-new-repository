@@ -20,11 +20,40 @@ export default function Terms() {
           third-party partner websites.
         </p>
 
+        <h2>Free listings</h2>
+        <p>
+          Sellers can post basic listings for free. LocalDeal may also offer
+          optional paid features such as bumped listings, featured placements or
+          promotional visibility.
+        </p>
+
         <h2>User listings</h2>
         <p>
           Users are responsible for the accuracy of listings they post. Do not
           post misleading, illegal, unsafe, stolen, counterfeit or inappropriate
           products.
+        </p>
+
+        <h2>Seller responsibility</h2>
+        <p>
+          Sellers are responsible for their own products, prices, images,
+          descriptions, communication, delivery arrangements and buyer disputes.
+          LocalDeal does not currently handle checkout between local buyers and
+          sellers.
+        </p>
+
+        <h2>Buyer responsibility</h2>
+        <p>
+          Buyers should check product details, seller information and listing
+          accuracy before making a purchase or contacting a seller. Meet safely
+          and avoid sending money if something looks suspicious.
+        </p>
+
+        <h2>Reviews</h2>
+        <p>
+          Reviews should be honest and based on genuine experiences. Do not post
+          abusive, fake, misleading or harmful reviews. LocalDeal may remove
+          reviews or listings that appear unsafe, misleading or inappropriate.
         </p>
 
         <h2>Partner and affiliate links</h2>
@@ -38,15 +67,16 @@ export default function Terms() {
         <h2>No guarantee</h2>
         <p>
           We do our best to keep listings useful and accurate, but we cannot
-          guarantee product availability, seller behaviour, delivery, pricing or
-          third-party website content.
+          guarantee product availability, seller behaviour, delivery, pricing,
+          reviews or third-party website content.
         </p>
 
         <h2>Reporting listings</h2>
         <p>
-          If you see a listing that appears misleading or unsafe, contact us at{" "}
-          <a href="mailto:support@localdeal.co.uk">
-            support@localdeal.co.uk
+          If you see a listing that appears misleading, expired, unsafe or
+          inappropriate, contact us at{" "}
+          <a href="mailto:viddchoudhary@hotmail.com">
+            viddchoudhary@hotmail.com
           </a>.
         </p>
 
@@ -65,12 +95,23 @@ export default function Terms() {
 function Header() {
   return (
     <div style={headerStyle}>
-      <a href="/" style={logoStyle}>LocalDeal</a>
+      <a href="/" style={logoStyle}>
+        LocalDeal
+      </a>
+
       <nav>
-        <a href="/about" style={linkStyle}>About</a>
-        <a href="/contact" style={linkStyle}>Contact</a>
-        <a href="/privacy-policy" style={linkStyle}>Privacy</a>
-        <a href="/terms" style={linkStyle}>Terms</a>
+        <a href="/about" style={linkStyle}>
+          About
+        </a>
+        <a href="/contact" style={linkStyle}>
+          Contact
+        </a>
+        <a href="/privacy-policy" style={linkStyle}>
+          Privacy
+        </a>
+        <a href="/terms" style={linkStyle}>
+          Terms
+        </a>
       </nav>
     </div>
   );
