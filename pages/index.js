@@ -17,6 +17,7 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [products, setProducts] = useState([]);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [boostingProductId, setBoostingProductId] = useState(null);
@@ -24,6 +25,7 @@ export default function Home() {
   useEffect(() => {
     checkUser();
     fetchProducts();
+    fetchReviews();
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
@@ -60,6 +62,16 @@ export default function Home() {
     }
 
     setLoading(false);
+  }
+
+  async function fetchReviews() {
+    const { data, error } = await supabase
+      .from("reviews")
+      .select("*");
+
+    if (!error) {
+      setReviews(data || []);
+    }
   }
 
   async function logout() {
@@ -120,6 +132,36 @@ export default function Home() {
     } finally {
       setBoostingProductId(null);
     }
+  }
+
+  function getSellerReviewStats(email) {
+    if (!email) {
+      return {
+        count: 0,
+        average: null
+      };
+    }
+
+    const sellerReviews = reviews.filter(
+      (review) => review.reviewed_email === email
+    );
+
+    if (sellerReviews.length === 0) {
+      return {
+        count: 0,
+        average: null
+      };
+    }
+
+    const total = sellerReviews.reduce(
+      (sum, review) => sum + Number(review.rating || 0),
+      0
+    );
+
+    return {
+      count: sellerReviews.length,
+      average: (total / sellerReviews.length).toFixed(1)
+    };
   }
 
   const filteredProducts = products.filter((product) => {
@@ -338,6 +380,8 @@ export default function Home() {
               const isFeatured = product.is_featured && isCurrentlyBoosted;
               const isBoosted = isFeatured || isCurrentlyBoosted;
 
+              const sellerStats = getSellerReviewStats(product.contact_email);
+
               return (
                 <div
                   key={product.id}
@@ -390,6 +434,38 @@ export default function Home() {
                     )}
 
                     <p className="location">📍 {product.location || "Online"}</p>
+
+                    {!product.is_affiliate && (
+                      <div className="sellerTrustBox">
+                        <p className="sellerName">
+                          Seller: {product.seller_name || "Local Seller"}
+                        </p>
+
+                        {sellerStats.count > 0 ? (
+                          <p className="reviewStats">
+                            ⭐ {sellerStats.average} / 5 ({sellerStats.count}{" "}
+                            {sellerStats.count === 1 ? "review" : "reviews"})
+                          </p>
+                        ) : (
+                          <p className="reviewStats muted">
+                            ⭐ No reviews yet
+                          </p>
+                        )}
+
+                        {product.contact_email && (
+                          <a
+                            href={`/review?email=${encodeURIComponent(
+                              product.contact_email
+                            )}&name=${encodeURIComponent(
+                              product.seller_name || "Seller"
+                            )}&type=seller`}
+                            className="reviewLink"
+                          >
+                            Review Seller
+                          </a>
+                        )}
+                      </div>
+                    )}
 
                     <button
                       onClick={() => openProduct(product)}
@@ -821,6 +897,42 @@ export default function Home() {
         .location {
           font-size: 13px;
           color: #6b7280;
+        }
+
+        .sellerTrustBox {
+          background: #f9fafb;
+          border: 1px solid #e5e7eb;
+          border-radius: 10px;
+          padding: 10px;
+          margin-top: 10px;
+          margin-bottom: 10px;
+        }
+
+        .sellerName {
+          margin: 0 0 4px;
+          font-size: 13px;
+          color: #374151;
+          font-weight: 700;
+        }
+
+        .reviewStats {
+          margin: 0 0 6px;
+          font-size: 13px;
+          color: #111827;
+          font-weight: 700;
+        }
+
+        .reviewStats.muted {
+          color: #6b7280;
+          font-weight: 600;
+        }
+
+        .reviewLink {
+          display: inline-block;
+          color: #111827;
+          font-weight: 700;
+          text-decoration: underline;
+          font-size: 13px;
         }
 
         .darkButton,
