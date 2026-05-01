@@ -51,7 +51,11 @@ export default function PostProduct() {
       return;
     }
 
-    if (affiliateUrl && !affiliateUrl.startsWith("http") && !affiliateUrl.startsWith("mailto:")) {
+    if (
+      affiliateUrl &&
+      !affiliateUrl.startsWith("http") &&
+      !affiliateUrl.startsWith("mailto:")
+    ) {
       alert("Product link must start with http, https, or mailto.");
       return;
     }
@@ -73,6 +77,8 @@ export default function PostProduct() {
         affiliate_url: affiliateUrl,
         source_website: sourceWebsite,
         is_affiliate: isAffiliate,
+        is_featured: false,
+        boost_type: "free",
         status: "active"
       }
     ]);
@@ -85,16 +91,26 @@ export default function PostProduct() {
       return;
     }
 
-    alert("Product posted successfully.");
+    alert("Product posted successfully for free.");
     window.location.href = "/";
   }
 
   if (checkingUser) {
-    return <div style={{ padding: "50px", fontFamily: "Arial" }}>Checking login...</div>;
+    return (
+      <div style={{ padding: "50px", fontFamily: "Arial" }}>
+        Checking login...
+      </div>
+    );
   }
 
   return (
-    <div style={{ fontFamily: "Arial, sans-serif", minHeight: "100vh", background: "#f8fafc" }}>
+    <div
+      style={{
+        fontFamily: "Arial, sans-serif",
+        minHeight: "100vh",
+        background: "#f8fafc"
+      }}
+    >
       <div
         style={{
           padding: "20px 40px",
@@ -123,28 +139,73 @@ export default function PostProduct() {
           boxShadow: "0 6px 18px rgba(0,0,0,0.08)"
         }}
       >
-        <h1>Post Product or Affiliate Deal</h1>
+        <h1>Post a Product for Free</h1>
+
         <p style={{ color: "#555" }}>
-          Add a local product, service, or affiliate partner product.
+          Basic listings are free. Later, sellers will be able to pay to boost
+          products to the top.
         </p>
 
+        <div
+          style={{
+            background: "#fef3c7",
+            padding: "14px",
+            borderRadius: "10px",
+            marginBottom: "20px",
+            color: "#92400e"
+          }}
+        >
+          <strong>Free listing:</strong> £0 today. No subscription required.
+        </div>
+
         <label>Product title *</label>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Example: Wireless Headphones" style={inputStyle} />
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Example: iPhone 13 for sale"
+          style={inputStyle}
+        />
 
         <label>Description</label>
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the product" style={{ ...inputStyle, minHeight: "100px" }} />
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Describe the product"
+          style={{ ...inputStyle, minHeight: "100px" }}
+        />
 
         <label>Price *</label>
-        <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Example: 39.99" style={inputStyle} />
+        <input
+          type="number"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          placeholder="Example: 250"
+          style={inputStyle}
+        />
 
         <label>Old price optional</label>
-        <input type="number" value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} placeholder="Example: 59.99" style={inputStyle} />
+        <input
+          type="number"
+          value={oldPrice}
+          onChange={(e) => setOldPrice(e.target.value)}
+          placeholder="Example: 300"
+          style={inputStyle}
+        />
 
         <label>Location *</label>
-        <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Online, Yeovil, London..." style={inputStyle} />
+        <input
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          placeholder="Online, Yeovil, Birmingham..."
+          style={inputStyle}
+        />
 
         <label>Category</label>
-        <select value={category} onChange={(e) => setCategory(e.target.value)} style={inputStyle}>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          style={inputStyle}
+        >
           <option>General</option>
           <option>Electronics</option>
           <option>Phones</option>
@@ -157,18 +218,45 @@ export default function PostProduct() {
         </select>
 
         <label>Image URL</label>
-        <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="Paste an image link" style={inputStyle} />
+        <input
+          value={imageUrl}
+          onChange={(e) => setImageUrl(e.target.value)}
+          placeholder="Paste an image link"
+          style={inputStyle}
+        />
 
         <label>Seller / store name</label>
-        <input value={sellerName} onChange={(e) => setSellerName(e.target.value)} placeholder="Example: Amazon, eBay, Local Seller" style={inputStyle} />
+        <input
+          value={sellerName}
+          onChange={(e) => setSellerName(e.target.value)}
+          placeholder="Example: John, Local Phone Shop, Amazon"
+          style={inputStyle}
+        />
 
         <label>Source website</label>
-        <input value={sourceWebsite} onChange={(e) => setSourceWebsite(e.target.value)} placeholder="Amazon, eBay, Awin, Local Seller" style={inputStyle} />
+        <input
+          value={sourceWebsite}
+          onChange={(e) => setSourceWebsite(e.target.value)}
+          placeholder="LocalDeal, Amazon, eBay, Awin"
+          style={inputStyle}
+        />
 
-        <label>Product / affiliate link</label>
-        <input value={affiliateUrl} onChange={(e) => setAffiliateUrl(e.target.value)} placeholder="Paste your affiliate link or product link" style={inputStyle} />
+        <label>Product / affiliate link optional</label>
+        <input
+          value={affiliateUrl}
+          onChange={(e) => setAffiliateUrl(e.target.value)}
+          placeholder="Paste product, WhatsApp, email, or affiliate link"
+          style={inputStyle}
+        />
 
-        <label style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "18px" }}>
+        <label
+          style={{
+            display: "flex",
+            gap: "10px",
+            alignItems: "center",
+            marginBottom: "18px"
+          }}
+        >
           <input
             type="checkbox"
             checked={isAffiliate}
@@ -192,8 +280,13 @@ export default function PostProduct() {
             fontSize: "16px"
           }}
         >
-          {submitting ? "Posting..." : "Post Product"}
+          {submitting ? "Posting..." : "Post Free Product"}
         </button>
+
+        <p style={{ marginTop: "18px", color: "#666", fontSize: "14px" }}>
+          Coming soon: bump your product to the top or pay for featured
+          placement.
+        </p>
       </div>
     </div>
   );
