@@ -205,6 +205,10 @@ export default function Home() {
               Post Free
             </a>
 
+            <a href="/my-listings" className="navLink">
+              My Listings
+            </a>
+
             {user ? (
               <>
                 <span className="email">{user.email}</span>
@@ -251,6 +255,10 @@ export default function Home() {
               <div className="heroButtons">
                 <a href="/post-product" className="primaryButton">
                   Post Free Listing
+                </a>
+
+                <a href="/my-listings" className="secondaryButton">
+                  Manage My Listings
                 </a>
 
                 <a href="#products-section" className="secondaryButton">
@@ -319,6 +327,24 @@ export default function Home() {
                 <p>
                   Sellers can create a free account and post products without a
                   monthly fee.
+                </p>
+              </div>
+
+              <div className="howCard">
+                <div className="howIcon">🛠️</div>
+                <h3>Manage Listings</h3>
+                <p>
+                  Sellers can edit, mark as sold, reactivate or delete their own
+                  listings from the My Listings page.
+                </p>
+              </div>
+
+              <div className="howCard">
+                <div className="howIcon">⭐</div>
+                <h3>Build Trust</h3>
+                <p>
+                  Buyers can leave reviews to help show which sellers are genuine
+                  and reliable.
                 </p>
               </div>
 
