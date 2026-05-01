@@ -141,7 +141,9 @@ export default function Home() {
   return (
     <div style={styles.page}>
       <header style={styles.topBar}>
-        <a href="/" style={styles.logo}>LocalDeal</a>
+        <a href="/" style={styles.logo}>
+          LocalDeal
+        </a>
 
         <div style={styles.searchWrap}>
           <input
@@ -164,7 +166,9 @@ export default function Home() {
         </div>
 
         <nav style={styles.nav}>
-          <a href="/post-product" style={styles.navLink}>Post Free</a>
+          <a href="/post-product" style={styles.navLink}>
+            Post Free
+          </a>
 
           {user ? (
             <>
@@ -175,8 +179,12 @@ export default function Home() {
             </>
           ) : (
             <>
-              <a href="/login" style={styles.navLink}>Login</a>
-              <a href="/signup" style={styles.signupButton}>Sign Up</a>
+              <a href="/login" style={styles.navLink}>
+                Login
+              </a>
+              <a href="/signup" style={styles.signupButton}>
+                Sign Up
+              </a>
             </>
           )}
         </nav>
@@ -248,6 +256,56 @@ export default function Home() {
         </div>
       </section>
 
+      {/* HOW IT WORKS */}
+      <section style={styles.howSection}>
+        <div style={styles.howInner}>
+          <h2 style={styles.howTitle}>How LocalDeal Works</h2>
+
+          <p style={styles.howSubtitle}>
+            Find local listings, partner deals and useful products in one simple
+            place.
+          </p>
+
+          <div style={styles.howGrid}>
+            <div style={styles.howCard}>
+              <div style={styles.howIcon}>🔍</div>
+              <h3>Browse Deals</h3>
+              <p style={styles.howText}>
+                Search products, categories and local listings from sellers and
+                partner websites.
+              </p>
+            </div>
+
+            <div style={styles.howCard}>
+              <div style={styles.howIcon}>📩</div>
+              <h3>Contact or Buy</h3>
+              <p style={styles.howText}>
+                Contact local sellers directly or visit trusted partner websites
+                through product links.
+              </p>
+            </div>
+
+            <div style={styles.howCard}>
+              <div style={styles.howIcon}>🆓</div>
+              <h3>Post for Free</h3>
+              <p style={styles.howText}>
+                Sellers can create a free account and post products without a
+                monthly fee.
+              </p>
+            </div>
+
+            <div style={styles.howCard}>
+              <div style={styles.howIcon}>🚀</div>
+              <h3>Boost Visibility</h3>
+              <p style={styles.howText}>
+                Sellers can optionally bump or feature listings to appear higher
+                on LocalDeal.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <main id="products-section" style={styles.productsSection}>
         <div style={styles.sectionHeader}>
           <div>
@@ -311,9 +369,11 @@ export default function Home() {
                   />
 
                   {isFeatured && <span style={styles.badge}>Featured</span>}
+
                   {!isFeatured && isBoosted && (
                     <span style={styles.badge}>Bumped</span>
                   )}
+
                   {!isBoosted && product.is_affiliate && (
                     <span style={styles.partnerBadge}>Partner</span>
                   )}
@@ -389,10 +449,18 @@ export default function Home() {
         </p>
 
         <div style={styles.footerLinks}>
-          <a href="/about" style={styles.footerLink}>About</a>
-          <a href="/contact" style={styles.footerLink}>Contact</a>
-          <a href="/privacy-policy" style={styles.footerLink}>Privacy Policy</a>
-          <a href="/terms" style={styles.footerLink}>Terms</a>
+          <a href="/about" style={styles.footerLink}>
+            About
+          </a>
+          <a href="/contact" style={styles.footerLink}>
+            Contact
+          </a>
+          <a href="/privacy-policy" style={styles.footerLink}>
+            Privacy Policy
+          </a>
+          <a href="/terms" style={styles.footerLink}>
+            Terms
+          </a>
           <a href="/affiliate-disclosure" style={styles.footerLink}>
             Affiliate Disclosure
           </a>
@@ -553,6 +621,46 @@ const styles = {
     marginBottom: 0,
     marginTop: "14px"
   },
+  howSection: {
+    padding: "45px 40px",
+    background: "white"
+  },
+  howInner: {
+    maxWidth: "1200px",
+    margin: "0 auto",
+    textAlign: "center"
+  },
+  howTitle: {
+    fontSize: "32px",
+    marginBottom: "12px",
+    color: "#111827"
+  },
+  howSubtitle: {
+    color: "#555",
+    fontSize: "17px",
+    marginBottom: "35px"
+  },
+  howGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gap: "22px"
+  },
+  howCard: {
+    background: "#f9fafb",
+    border: "1px solid #e5e7eb",
+    borderRadius: "16px",
+    padding: "24px",
+    boxShadow: "0 4px 14px rgba(0,0,0,0.05)"
+  },
+  howIcon: {
+    fontSize: "34px",
+    marginBottom: "10px"
+  },
+  howText: {
+    color: "#555",
+    fontSize: "14px",
+    lineHeight: "1.6"
+  },
   productsSection: {
     padding: "45px 40px",
     maxWidth: "1300px",
@@ -562,7 +670,8 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "24px"
+    marginBottom: "24px",
+    gap: "20px"
   },
   sectionTitle: {
     fontSize: "30px",
