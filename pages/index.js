@@ -704,19 +704,26 @@ export default function Home() {
 
       {/* FOOTER */}
       <div
-        style={{
-          background: "#111827",
-          color: "#d1d5db",
-          textAlign: "center",
-          padding: "35px"
-        }}
-      >
-        <p style={{ margin: 0 }}>
-          LocalDeal is free to use for basic listings. Partner links may earn
-          commission. Sellers can pay to bump or feature listings.
-        </p>
-      </div>
-    </div>
+  style={{
+    background: "#111827",
+    color: "#d1d5db",
+    textAlign: "center",
+    padding: "35px"
+  }}
+>
+  <p style={{ marginBottom: "18px" }}>
+    LocalDeal is free to use for basic listings. Partner links may earn
+    commission. Sellers can pay to bump or feature listings.
+  </p>
+
+  <div style={{ display: "flex", justifyContent: "center", gap: "18px", flexWrap: "wrap" }}>
+    <a href="/about" style={{ color: "#d1d5db" }}>About</a>
+    <a href="/contact" style={{ color: "#d1d5db" }}>Contact</a>
+    <a href="/privacy-policy" style={{ color: "#d1d5db" }}>Privacy Policy</a>
+    <a href="/terms" style={{ color: "#d1d5db" }}>Terms</a>
+    <a href="/affiliate-disclosure" style={{ color: "#d1d5db" }}>Affiliate Disclosure</a>
+  </div>
+</div>
   );
 }
 
