@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@vercel/analytics": "latest"
     "@supabase/supabase-js": "^2.45.0",
     "firebase": "^10.12.0",
     "lucide-react": "latest",
