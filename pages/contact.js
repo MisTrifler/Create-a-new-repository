@@ -13,14 +13,9 @@ export default function Contact() {
 
         <h3>Email</h3>
         <p>
-          <a href="mailto:support@localdeal.co.uk">
-            support@localdeal.co.uk
+          <a href="mailto:viddchoudhary@hotmail.com">
+            viddchoudhary@hotmail.com
           </a>
-        </p>
-
-        <p>
-          If that email is not active yet, use your current support email and
-          replace it later when you buy a domain email.
         </p>
 
         <h3>Report a listing</h3>
@@ -30,7 +25,7 @@ export default function Contact() {
         </p>
 
         <p>
-          <a href="mailto:support@localdeal.co.uk?subject=Report a LocalDeal listing">
+          <a href="mailto:viddchoudhary@hotmail.com?subject=Report a LocalDeal listing">
             Report a listing
           </a>
         </p>
