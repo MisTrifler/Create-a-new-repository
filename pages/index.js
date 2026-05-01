@@ -49,45 +49,18 @@ export default function Home() {
       }}
     >
       {/* HEADER */}
-      <div>
-  <a
-    href="/post-deal"
-    style={{
-      marginRight: "20px",
-      textDecoration: "none",
-      color: "#111",
-      fontWeight: "500"
-    }}
-  >
-    Post Deal
-  </a>
-
-  <a
-    href="/login"
-    style={{
-      marginRight: "20px",
-      textDecoration: "none",
-      color: "#111",
-      fontWeight: "500"
-    }}
-  >
-    Login
-  </a>
-
-  <a
-    href="/signup"
-    style={{
-      padding: "10px 16px",
-      background: "#111827",
-      color: "white",
-      textDecoration: "none",
-      borderRadius: "8px",
-      fontWeight: "600"
-    }}
-  >
-    Sign Up
-  </a>
-</div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "20px 40px",
+          background: "white",
+          borderBottom: "1px solid #e5e7eb",
+          position: "sticky",
+          top: 0,
+          zIndex: 10
+        }}
       >
         <a href="/" style={{ textDecoration: "none", color: "#111" }}>
           <h2 style={{ margin: 0 }}>LocalDeal</h2>
@@ -109,12 +82,27 @@ export default function Home() {
           <a
             href="/login"
             style={{
+              marginRight: "20px",
               textDecoration: "none",
               color: "#111",
               fontWeight: "500"
             }}
           >
             Login
+          </a>
+
+          <a
+            href="/signup"
+            style={{
+              padding: "10px 16px",
+              background: "#111827",
+              color: "white",
+              textDecoration: "none",
+              borderRadius: "8px",
+              fontWeight: "600"
+            }}
+          >
+            Sign Up
           </a>
         </div>
       </div>
@@ -284,10 +272,10 @@ export default function Home() {
 
                   <button
                     onClick={() => {
-                      if (deal.deal_url) {
-                        window.open(deal.deal_url, "_blank");
+                      if (deal.deal_url && deal.deal_url.startsWith("http")) {
+                        window.location.href = deal.deal_url;
                       } else {
-                        alert("No link available for this deal yet.");
+                        alert("No valid link found for this deal.");
                       }
                     }}
                     style={{
