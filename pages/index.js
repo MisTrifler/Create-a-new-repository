@@ -15,17 +15,26 @@ const categories = [
 
 export default function Home() {
   const [search, setSearch] = useState("");
+  const [buyerLocation, setBuyerLocation] = useState("");
+  const [locationInput, setLocationInput] = useState("");
   const [category, setCategory] = useState("All");
   const [products, setProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [boostingProductId, setBoostingProductId] = useState(null);
+  const [detectingLocation, setDetectingLocation] = useState(false);
 
   useEffect(() => {
     checkUser();
     fetchProducts();
     fetchReviews();
+
+    const savedLocation = localStorage.getItem("localdeal_location");
+    if (savedLocation) {
+      setBuyerLocation(savedLocation);
+      setLocationInput(savedLocation);
+    }
 
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
@@ -76,6 +85,63 @@ export default function Home() {
     await supabase.auth.signOut();
     setUser(null);
     alert("Logged out successfully.");
+  }
+
+  function saveLocation() {
+    const cleaned = locationInput.trim();
+
+    if (!cleaned) {
+      alert("Please enter your town, city or postcode area.");
+      return;
+    }
+
+    setBuyerLocation(cleaned);
+    localStorage.setItem("localdeal_location", cleaned);
+
+    document.getElementById("products-section")?.scrollIntoView({
+      behavior: "smooth"
+    });
+  }
+
+  function clearLocation() {
+    setBuyerLocation("");
+    setLocationInput("");
+    localStorage.removeItem("localdeal_location");
+  }
+
+  function useMyLocation() {
+    if (!navigator.geolocation) {
+      alert("Your browser does not support location detection. Please type your town or postcode.");
+      return;
+    }
+
+    setDetectingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        // Simple UK-friendly fallback. Browser gives coordinates, but without a maps API
+        // we cannot always convert it perfectly into a town name.
+        // User can still manually change it.
+        const detected = `Near ${lat.toFixed(2)}, ${lon.toFixed(2)}`;
+
+        setBuyerLocation(detected);
+        setLocationInput(detected);
+        localStorage.setItem("localdeal_location", detected);
+
+        setDetectingLocation(false);
+
+        document.getElementById("products-section")?.scrollIntoView({
+          behavior: "smooth"
+        });
+      },
+      () => {
+        setDetectingLocation(false);
+        alert("Location permission was blocked. Please type your town or postcode instead.");
+      }
+    );
   }
 
   function openProduct(product) {
@@ -157,20 +223,36 @@ export default function Home() {
   }
 
   const filteredProducts = products.filter((product) => {
-    const value = search.toLowerCase();
+    const searchValue = search.toLowerCase();
+    const locationValue = buyerLocation.toLowerCase();
 
     const matchesSearch =
       search === "" ||
-      product.title?.toLowerCase().includes(value) ||
-      product.description?.toLowerCase().includes(value) ||
-      product.location?.toLowerCase().includes(value) ||
-      product.category?.toLowerCase().includes(value) ||
-      product.source_website?.toLowerCase().includes(value);
+      product.title?.toLowerCase().includes(searchValue) ||
+      product.description?.toLowerCase().includes(searchValue) ||
+      product.location?.toLowerCase().includes(searchValue) ||
+      product.category?.toLowerCase().includes(searchValue) ||
+      product.source_website?.toLowerCase().includes(searchValue);
 
     const matchesCategory = category === "All" || product.category === category;
 
-    return matchesSearch && matchesCategory;
+    const isOnlineOrAffiliate =
+      product.is_affiliate ||
+      product.location?.toLowerCase() === "online" ||
+      product.source_website?.toLowerCase() !== "localdeal";
+
+    const matchesBuyerLocation =
+      !buyerLocation ||
+      isOnlineOrAffiliate ||
+      product.location?.toLowerCase().includes(locationValue) ||
+      locationValue.includes(product.location?.toLowerCase());
+
+    return matchesSearch && matchesCategory && matchesBuyerLocation;
   });
+
+  const pageTitle = buyerLocation
+    ? `Deals near ${buyerLocation}`
+    : "Deals near you";
 
   return (
     <>
@@ -244,13 +326,42 @@ export default function Home() {
         <section className="hero">
           <div className="heroInner">
             <div>
-              <h1>Post products for free. Boost only when you want more views.</h1>
+              <p className="eyebrow">Local listings + partner deals</p>
+
+              <h1>{pageTitle}</h1>
 
               <p>
-                LocalDeal helps UK buyers find local listings and partner deals.
-                Basic posting is free. Sellers can pay to bump or feature products
-                for more visibility.
+                Enter your town or postcode area to see local seller listings
+                near you. Online partner deals still appear for everyone.
               </p>
+
+              <div className="locationBox">
+                <input
+                  placeholder="Enter town, city or postcode area e.g. Birmingham, B12"
+                  value={locationInput}
+                  onChange={(e) => setLocationInput(e.target.value)}
+                  className="locationInput"
+                />
+
+                <button onClick={saveLocation} className="locationButton">
+                  Show Deals
+                </button>
+
+                <button
+                  onClick={useMyLocation}
+                  className="detectButton"
+                  disabled={detectingLocation}
+                >
+                  {detectingLocation ? "Detecting..." : "Use my location"}
+                </button>
+              </div>
+
+              {buyerLocation && (
+                <p className="currentLocation">
+                  Showing local results for <strong>{buyerLocation}</strong>{" "}
+                  <button onClick={clearLocation}>Change</button>
+                </p>
+              )}
 
               <div className="heroButtons">
                 <a href="/post-product" className="primaryButton">
@@ -286,8 +397,8 @@ export default function Home() {
               </div>
 
               <p>
-                Affiliate disclosure: some outbound links may earn LocalDeal a
-                commission at no extra cost to the buyer.
+                Sellers choose their listing location. Buyers choose their area
+                to find relevant local listings.
               </p>
             </div>
           </div>
@@ -303,6 +414,15 @@ export default function Home() {
             </p>
 
             <div className="howGrid">
+              <div className="howCard">
+                <div className="howIcon">📍</div>
+                <h3>Choose Your Area</h3>
+                <p>
+                  Enter your town or postcode area so LocalDeal can show listings
+                  that are more relevant to you.
+                </p>
+              </div>
+
               <div className="howCard">
                 <div className="howIcon">🔍</div>
                 <h3>Browse Deals</h3>
@@ -331,15 +451,6 @@ export default function Home() {
               </div>
 
               <div className="howCard">
-                <div className="howIcon">🛠️</div>
-                <h3>Manage Listings</h3>
-                <p>
-                  Sellers can edit, mark as sold, reactivate or delete their own
-                  listings from the My Listings page.
-                </p>
-              </div>
-
-              <div className="howCard">
                 <div className="howIcon">⭐</div>
                 <h3>Build Trust</h3>
                 <p>
@@ -363,10 +474,10 @@ export default function Home() {
         <main id="products-section" className="productsSection">
           <div className="sectionHeader">
             <div>
-              <h2>🔥 Featured Products</h2>
+              <h2>🔥 {pageTitle}</h2>
               <p>
                 Basic listings are free. Featured and bumped products appear
-                higher. Some partner links may earn commission.
+                higher. Online partner deals may earn commission.
               </p>
             </div>
 
@@ -378,7 +489,14 @@ export default function Home() {
           {loading && <p>Loading products...</p>}
 
           {!loading && filteredProducts.length === 0 && (
-            <p>No products found. Try another search or post the first item.</p>
+            <div className="emptyResults">
+              <h3>No local listings found yet.</h3>
+              <p>
+                Try another town/postcode, clear your location filter, or post
+                the first product in your area.
+              </p>
+              <button onClick={clearLocation}>Clear location filter</button>
+            </div>
           )}
 
           <div className="grid">
@@ -682,6 +800,15 @@ export default function Home() {
           align-items: center;
         }
 
+        .eyebrow {
+          color: #92400e !important;
+          font-weight: 800;
+          font-size: 14px !important;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          margin-bottom: 10px !important;
+        }
+
         .hero h1 {
           font-size: 54px;
           line-height: 1.05;
@@ -692,6 +819,65 @@ export default function Home() {
           font-size: 18px;
           color: #4b5563;
           margin-bottom: 24px;
+        }
+
+        .locationBox {
+          background: white;
+          padding: 12px;
+          border-radius: 14px;
+          display: grid;
+          grid-template-columns: 1fr auto auto;
+          gap: 10px;
+          box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+          margin-bottom: 16px;
+        }
+
+        .locationInput {
+          width: 100%;
+          padding: 13px;
+          border: 1px solid #d1d5db;
+          border-radius: 10px;
+          font-size: 15px;
+        }
+
+        .locationButton,
+        .detectButton {
+          padding: 13px 16px;
+          border: none;
+          border-radius: 10px;
+          cursor: pointer;
+          font-weight: 800;
+          white-space: nowrap;
+        }
+
+        .locationButton {
+          background: #111827;
+          color: white;
+        }
+
+        .detectButton {
+          background: #f4b400;
+          color: #111827;
+        }
+
+        .detectButton:disabled {
+          background: #d1d5db;
+          cursor: not-allowed;
+        }
+
+        .currentLocation {
+          font-size: 14px !important;
+          color: #374151 !important;
+          margin-bottom: 18px !important;
+        }
+
+        .currentLocation button {
+          border: none;
+          background: transparent;
+          color: #111827;
+          text-decoration: underline;
+          font-weight: 800;
+          cursor: pointer;
         }
 
         .heroButtons {
@@ -811,6 +997,24 @@ export default function Home() {
 
         .sectionHeader p {
           color: #666;
+        }
+
+        .emptyResults {
+          background: white;
+          border: 1px solid #e5e7eb;
+          padding: 25px;
+          border-radius: 14px;
+          margin-bottom: 25px;
+        }
+
+        .emptyResults button {
+          background: #111827;
+          color: white;
+          border: none;
+          border-radius: 8px;
+          padding: 11px 14px;
+          font-weight: 800;
+          cursor: pointer;
         }
 
         .grid {
@@ -1023,6 +1227,10 @@ export default function Home() {
             font-size: 42px;
           }
 
+          .locationBox {
+            grid-template-columns: 1fr;
+          }
+
           .sectionHeader {
             flex-direction: column;
             align-items: flex-start;
@@ -1092,6 +1300,10 @@ export default function Home() {
 
           .hero p {
             font-size: 16px;
+          }
+
+          .locationBox {
+            padding: 10px;
           }
 
           .heroButtons {
