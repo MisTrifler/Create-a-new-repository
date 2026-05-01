@@ -64,6 +64,13 @@ export default function Terms() {
           third-party website.
         </p>
 
+        <h2>Paid boosts and featured placements</h2>
+        <p>
+          LocalDeal may allow sellers to pay for optional promotional features
+          such as bumping a listing or featured placement. These services improve
+          visibility but do not guarantee a sale.
+        </p>
+
         <h2>No guarantee</h2>
         <p>
           We do our best to keep listings useful and accurate, but we cannot
@@ -137,7 +144,9 @@ const headerStyle = {
   color: "white",
   display: "flex",
   justifyContent: "space-between",
-  alignItems: "center"
+  alignItems: "center",
+  gap: "20px",
+  flexWrap: "wrap"
 };
 
 const logoStyle = {
