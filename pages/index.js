@@ -19,6 +19,7 @@ export default function Home() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
+  const [boostingProductId, setBoostingProductId] = useState(null);
 
   useEffect(() => {
     checkUser();
@@ -85,6 +86,42 @@ export default function Home() {
     }
 
     alert("No valid link found for this product.");
+  }
+
+  async function startBoost(productId, boostType) {
+    if (!user) {
+      alert("Please login before boosting a listing.");
+      window.location.href = "/login";
+      return;
+    }
+
+    try {
+      setBoostingProductId(productId);
+
+      const response = await fetch("/api/create-boost-checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          productId,
+          boostType
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || "Could not start boost payment.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong starting the boost payment.");
+    } finally {
+      setBoostingProductId(null);
+    }
   }
 
   const filteredProducts = products.filter((product) => {
@@ -290,8 +327,8 @@ export default function Home() {
               }}
             >
               LocalDeal helps UK buyers find local listings and partner deals.
-              Basic posting is free. Sellers can later pay to bump or feature
-              products.
+              Basic posting is free. Sellers can pay to bump or feature products
+              for more visibility.
             </p>
 
             <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
@@ -343,12 +380,12 @@ export default function Home() {
 
             <div style={priceBox}>
               <strong>Bump to top</strong>
-              <span>Coming soon</span>
+              <span>£1.99 / 24 hours</span>
             </div>
 
             <div style={priceBox}>
               <strong>Featured placement</strong>
-              <span>Coming soon</span>
+              <span>£4.99 / 7 days</span>
             </div>
 
             <p style={{ color: "#555", marginBottom: 0 }}>
@@ -422,10 +459,15 @@ export default function Home() {
                     )
                   : null;
 
+              const isCurrentlyBoosted =
+                product.bumped_until &&
+                new Date(product.bumped_until) > new Date();
+
+              const isFeatured =
+                product.is_featured && isCurrentlyBoosted;
+
               const isBoosted =
-                product.is_featured ||
-                (product.bumped_until &&
-                  new Date(product.bumped_until) > new Date());
+                isFeatured || isCurrentlyBoosted;
 
               return (
                 <div
@@ -460,7 +502,7 @@ export default function Home() {
                       }}
                     />
 
-                    {isBoosted && (
+                    {isFeatured && (
                       <span
                         style={{
                           position: "absolute",
@@ -475,6 +517,24 @@ export default function Home() {
                         }}
                       >
                         Featured
+                      </span>
+                    )}
+
+                    {!isFeatured && isBoosted && (
+                      <span
+                        style={{
+                          position: "absolute",
+                          top: "10px",
+                          left: "10px",
+                          background: "#f4b400",
+                          color: "#111827",
+                          padding: "5px 8px",
+                          borderRadius: "999px",
+                          fontSize: "12px",
+                          fontWeight: "700"
+                        }}
+                      >
+                        Bumped
                       </span>
                     )}
 
@@ -589,27 +649,56 @@ export default function Home() {
                         : "Contact Seller"}
                     </button>
 
-                    {!isBoosted && !product.is_affiliate && (
-                      <button
-                        onClick={() =>
-                          alert(
-                            "Boost payments are coming soon. For now, contact LocalDeal to feature this listing."
-                          )
-                        }
-                        style={{
-                          width: "100%",
-                          padding: "10px",
-                          background: "white",
-                          color: "#111827",
-                          border: "1px solid #d1d5db",
-                          borderRadius: "9px",
-                          cursor: "pointer",
-                          fontWeight: "700",
-                          marginTop: "8px"
-                        }}
-                      >
-                        Boost Listing
-                      </button>
+                    {!product.is_affiliate && (
+                      <div style={{ marginTop: "8px" }}>
+                        <button
+                          onClick={() => startBoost(product.id, "bump_24h")}
+                          disabled={boostingProductId === product.id}
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            background: "white",
+                            color: "#111827",
+                            border: "1px solid #d1d5db",
+                            borderRadius: "9px",
+                            cursor:
+                              boostingProductId === product.id
+                                ? "not-allowed"
+                                : "pointer",
+                            fontWeight: "700",
+                            marginTop: "8px"
+                          }}
+                        >
+                          {boostingProductId === product.id
+                            ? "Loading..."
+                            : "Bump to top — £1.99"}
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            startBoost(product.id, "featured_7d")
+                          }
+                          disabled={boostingProductId === product.id}
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            background: "#f4b400",
+                            color: "#111827",
+                            border: "none",
+                            borderRadius: "9px",
+                            cursor:
+                              boostingProductId === product.id
+                                ? "not-allowed"
+                                : "pointer",
+                            fontWeight: "700",
+                            marginTop: "8px"
+                          }}
+                        >
+                          {boostingProductId === product.id
+                            ? "Loading..."
+                            : "Featured 7 days — £4.99"}
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -630,7 +719,7 @@ export default function Home() {
       >
         <p style={{ margin: 0 }}>
           LocalDeal is free to use for basic listings. Partner links may earn
-          commission. Featured listing payments coming soon.
+          commission. Sellers can pay to bump or feature listings.
         </p>
       </div>
     </div>
