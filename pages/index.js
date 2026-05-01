@@ -25,6 +25,16 @@ export default function Home() {
   const [boostingProductId, setBoostingProductId] = useState(null);
   const [detectingLocation, setDetectingLocation] = useState(false);
 
+  const popularAreas = [
+    "Birmingham",
+    "Walsall",
+    "Manchester",
+    "London",
+    "Leeds",
+    "Glasgow",
+    "Cardiff"
+  ];
+
   useEffect(() => {
     checkUser();
     fetchProducts();
@@ -66,26 +76,54 @@ export default function Home() {
 
     const keywords = [cleaned];
 
-    const westMidlandsAreas = [
-      "birmingham",
-      "walsall",
-      "west bromwich",
-      "wolverhampton",
-      "solihull",
-      "dudley",
-      "sutton coldfield",
-      "sandwell",
-      "coventry",
-      "west midlands"
-    ];
+    const areaGroups = {
+      "west midlands": [
+        "birmingham",
+        "walsall",
+        "west bromwich",
+        "wolverhampton",
+        "solihull",
+        "dudley",
+        "sutton coldfield",
+        "sandwell",
+        "coventry",
+        "west midlands"
+      ],
+      manchester: [
+        "manchester",
+        "greater manchester",
+        "salford",
+        "stockport",
+        "bolton",
+        "oldham",
+        "rochdale",
+        "bury",
+        "trafford"
+      ],
+      london: [
+        "london",
+        "greater london",
+        "westminster",
+        "camden",
+        "hackney",
+        "croydon",
+        "greenwich",
+        "ealing",
+        "barking",
+        "waltham forest"
+      ],
+      leeds: ["leeds", "west yorkshire", "bradford", "wakefield", "huddersfield"],
+      glasgow: ["glasgow", "glasgow city", "paisley", "east kilbride"],
+      cardiff: ["cardiff", "newport", "caerphilly", "vale of glamorgan"]
+    };
 
-    const isWestMidlands = westMidlandsAreas.some((area) =>
-      cleaned.includes(area)
-    );
+    Object.values(areaGroups).forEach((group) => {
+      const matched = group.some((area) => cleaned.includes(area));
 
-    if (isWestMidlands) {
-      keywords.push(...westMidlandsAreas);
-    }
+      if (matched) {
+        keywords.push(...group);
+      }
+    });
 
     return [...new Set(keywords)];
   }
@@ -153,6 +191,18 @@ export default function Home() {
     setBuyerLocation("");
     setLocationInput("");
     localStorage.removeItem("localdeal_location");
+  }
+
+  function choosePopularArea(area) {
+    const cleaned = cleanLocationText(area);
+
+    setBuyerLocation(cleaned);
+    setLocationInput(cleaned);
+    localStorage.setItem("localdeal_location", cleaned);
+
+    document.getElementById("products-section")?.scrollIntoView({
+      behavior: "smooth"
+    });
   }
 
   async function useMyLocation() {
@@ -419,8 +469,9 @@ export default function Home() {
               <h1>{pageTitle}</h1>
 
               <p>
-                Enter your town or postcode area, or let LocalDeal detect your
-                nearest area. Online partner deals still appear for everyone.
+                Enter your town or postcode area, use your location, or choose a
+                popular UK area below. Online partner deals still appear for
+                everyone.
               </p>
 
               <div className="locationBox">
@@ -451,6 +502,27 @@ export default function Home() {
                   <button onClick={clearLocation}>Change</button>
                 </p>
               )}
+
+              <div className="popularAreasBox">
+                <p>Popular UK areas</p>
+
+                <div className="popularAreaButtons">
+                  {popularAreas.map((area) => (
+                    <button
+                      key={area}
+                      onClick={() => choosePopularArea(area)}
+                      className={
+                        normaliseLocation(buyerLocation) ===
+                        normaliseLocation(area)
+                          ? "areaButton activeArea"
+                          : "areaButton"
+                      }
+                    >
+                      {area}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
               <div className="heroButtons">
                 <a href="/post-product" className="primaryButton">
@@ -507,8 +579,8 @@ export default function Home() {
                 <div className="howIcon">📍</div>
                 <h3>Choose Your Area</h3>
                 <p>
-                  Enter your town or postcode area, or use location detection to
-                  find deals near you.
+                  Enter your town or postcode area, pick a popular UK city, or
+                  use location detection to find deals near you.
                 </p>
               </div>
 
@@ -581,8 +653,8 @@ export default function Home() {
             <div className="emptyResults">
               <h3>No local listings found yet.</h3>
               <p>
-                Try another town/postcode, clear your location filter, or post
-                the first product in your area.
+                Try another town/postcode, choose another popular area, clear
+                your location filter, or post the first product in your area.
               </p>
               <button onClick={clearLocation}>Clear location filter</button>
             </div>
@@ -984,6 +1056,46 @@ export default function Home() {
           text-decoration: underline;
           font-weight: 800;
           cursor: pointer;
+        }
+
+        .popularAreasBox {
+          margin: 16px 0 20px;
+        }
+
+        .popularAreasBox p {
+          margin: 0 0 10px !important;
+          font-size: 14px !important;
+          color: #374151 !important;
+          font-weight: 800;
+        }
+
+        .popularAreaButtons {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+
+        .areaButton {
+          background: white;
+          border: 1px solid #d1d5db;
+          color: #111827;
+          padding: 10px 14px;
+          border-radius: 999px;
+          cursor: pointer;
+          font-weight: 800;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .areaButton:hover {
+          background: #f4b400;
+          border-color: #f4b400;
+          color: #111827;
+        }
+
+        .activeArea {
+          background: #111827;
+          color: white;
+          border-color: #111827;
         }
 
         .heroButtons {
@@ -1410,6 +1522,16 @@ export default function Home() {
 
           .locationBox {
             padding: 10px;
+          }
+
+          .popularAreaButtons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+          }
+
+          .areaButton {
+            width: 100%;
           }
 
           .heroButtons {
