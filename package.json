@@ -1,7 +1,6 @@
 {
   "name": "localdeal",
   "version": "1.0.0",
-  "description": "Accessible marketplace with video inspection & verified sellers",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,21 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@vercel/analytics": "latest"
-    "@supabase/supabase-js": "^2.45.0",
-    "firebase": "^10.12.0",
-    "lucide-react": "latest",
-    "next": "^14.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "stripe": "^13.0.0"
+    "@supabase/supabase-js": "latest",
+    "@vercel/analytics": "latest",
+    "next": "14.2.35",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "stripe": "latest"
   },
-  "devDependencies": {
-    "autoprefixer": "latest",
-    "postcss": "latest",
-    "tailwindcss": "latest"
-  },
-  "engines": {
-    "node": "20.x"
-  }
+  "devDependencies": {}
 }
