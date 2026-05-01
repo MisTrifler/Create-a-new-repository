@@ -56,7 +56,10 @@ export default function Home() {
           alignItems: "center",
           padding: "20px 40px",
           background: "white",
-          borderBottom: "1px solid #e5e7eb"
+          borderBottom: "1px solid #e5e7eb",
+          position: "sticky",
+          top: 0,
+          zIndex: 10
         }}
       >
         <a href="/" style={{ textDecoration: "none", color: "#111" }}>
@@ -132,6 +135,11 @@ export default function Home() {
         />
 
         <button
+          onClick={() => {
+            document
+              .getElementById("deals-section")
+              ?.scrollIntoView({ behavior: "smooth" });
+          }}
           style={{
             padding: "15px 26px",
             background: "#f4b400",
@@ -147,7 +155,7 @@ export default function Home() {
       </div>
 
       {/* DEALS */}
-      <div style={{ padding: "55px 45px" }}>
+      <div id="deals-section" style={{ padding: "55px 45px" }}>
         <h2 style={{ marginBottom: "25px", fontSize: "28px" }}>
           🔥 Deals Near You
         </h2>
@@ -247,27 +255,27 @@ export default function Home() {
                     </p>
                   )}
 
-                  <a
-                    href={deal.deal_url || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ textDecoration: "none" }}
+                  <button
+                    onClick={() => {
+                      if (deal.deal_url) {
+                        window.open(deal.deal_url, "_blank");
+                      } else {
+                        alert("No link available for this deal yet.");
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "13px",
+                      background: "#111827",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "10px",
+                      cursor: "pointer",
+                      fontWeight: "bold"
+                    }}
                   >
-                    <button
-                      style={{
-                        width: "100%",
-                        padding: "13px",
-                        background: "#111827",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "10px",
-                        cursor: "pointer",
-                        fontWeight: "bold"
-                      }}
-                    >
-                      View Deal
-                    </button>
-                  </a>
+                    View Deal
+                  </button>
                 </div>
               </div>
             );
